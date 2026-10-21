@@ -65,7 +65,22 @@ def main():
     # Plot class distribution across splits
     plot_class_distribution(y_train_class, y_val_class, y_test_class, class_names=CLASS_NAMES)
 
-    # 3. Model 1: Support Vector Regression (SVR) with Kernels
+    # 3. Model 1: k-Nearest Neighbours (Explicitly requested for 'k vs validation score' & 'selected k')
+    print("\n--- Tuning k-Nearest Neighbours (k-NN) ---")
+    from src.model import tune_knn, evaluate_model
+    from src.evaluate import plot_k_vs_validation_score
+    knn_tuning_df, best_k = tune_knn(X_train, y_train_class, X_val, y_val_class, k_values=list(range(1, 26, 2)))
+    plot_k_vs_validation_score(knn_tuning_df, best_k, output_path="outputs/plots/k_vs_validation_score.png")
+    
+    from sklearn.neighbors import KNeighborsClassifier
+    best_knn = KNeighborsClassifier(n_neighbors=best_k, weights='distance', metric='euclidean')
+    best_knn.fit(X_train, y_train_class)
+    eval_knn, _ = evaluate_model(best_knn, X_test, y_test_class, class_names=CLASS_NAMES)
+    plot_confusion_matrix(eval_knn['confusion_matrix'], class_names=CLASS_NAMES,
+                          title=f"k-NN (Selected k={best_k}) Test Confusion Matrix",
+                          output_path="outputs/plots/confusion_matrix.png")
+
+    # 4. Model 2: Support Vector Regression (SVR) with Kernels
     best_svr, best_svr_config, svr_results_df = tune_svr_kernels(
         X_train, y_cont_train, y_train_class,
         X_val, y_cont_val, y_val_class,
@@ -81,7 +96,7 @@ def main():
                           title=f"SVR ({best_svr_config['kernel'].upper()}) Test Confusion Matrix",
                           output_path="outputs/plots/confusion_matrix_svr.png")
 
-    # 4. Model 2: Neural-Network-KKT Fuzzy Regression
+    # 5. Model 3: Neural-Network-KKT Fuzzy Regression
     fuzzy_nn = FuzzyKKTRegressionModel(input_dim=64, hidden_dim=128, alpha=0.05, beta=10.0, epochs=80, lr=0.002)
     fuzzy_nn.fit(X_train, y_cont_train, tertiles)
 
@@ -97,16 +112,17 @@ def main():
     center_test, lower_test, upper_test, _ = fuzzy_nn.predict_fuzzy(X_test)
     plot_fuzzy_kkt_intervals(y_cont_test, center_test, lower_test, upper_test, n_samples=60)
 
-    # 5. Model Selection & Spatial GeoTIFF Export (EPSG:32643, 30 m)
-    # Select the top-performing model based on Balanced Accuracy
-    if eval_svr['balanced_accuracy'] >= eval_fuzzy['balanced_accuracy']:
-        champion_model = best_svr
-        champion_name = f"SVR_{best_svr_config['kernel']}"
-    else:
-        champion_model = fuzzy_nn
-        champion_name = "NeuralNetwork_KKT_Fuzzy"
+    # 6. Model Selection & Spatial GeoTIFF Export (EPSG:32643, 30 m)
+    candidates = [
+        ('SVR_' + best_svr_config['kernel'], best_svr, eval_svr['balanced_accuracy']),
+        ('NN_KKT_Fuzzy', fuzzy_nn, eval_fuzzy['balanced_accuracy']),
+        (f'kNN_k{best_k}', best_knn, eval_knn['balanced_accuracy'])
+    ]
+    candidates.sort(key=lambda x: x[2], reverse=True)
+    champion_name, champion_model, champion_acc = candidates[0]
 
-    print(f"\nChampion model for spatial mapping: {champion_name}")
+    print(f"\nChampion model for spatial mapping: {champion_name} (Bal Acc: {champion_acc*100:.2f}%)")
+
 
     # Save model artifacts
     joblib.dump({
@@ -131,16 +147,16 @@ def main():
     )
 
     # 6. Generate Comprehensive Report Summary & Student Conclusion
-    write_report_summary(eval_svr, eval_fuzzy, best_svr_config, tertiles, champion_name)
+    write_report_summary(eval_knn, best_k, eval_svr, eval_fuzzy, best_svr_config, tertiles, champion_name)
     print("\n Pipeline execution completed successfully! Check the outputs/ folder.")
 
-def write_report_summary(eval_svr, eval_fuzzy, svr_cfg, tertiles, champion_name):
+def write_report_summary(eval_knn, best_k, eval_svr, eval_fuzzy, svr_cfg, tertiles, champion_name):
     report_path = "outputs/report_summary.md"
     os.makedirs(os.path.dirname(report_path), exist_ok=True)
     
     t_low, t_high = tertiles
     md_content = rf"""# Assignment 4: Bengaluru Urban Cooling Island (UCI) Analysis
-**Algorithms:** Support Vector Regression (SVR) with Kernels & Neural-Network-KKT Fuzzy Regression  
+**Algorithms:** Support Vector Regression (SVR) with Kernels & Neural-Network-KKT Fuzzy Regression (plus k-Nearest Neighbours benchmark)  
 **Features:** Google AlphaEarth Satellite Embedding V1 (64 bands: A00–A63)  
 **Target:** Continuous Cooling Intensity ($\Delta T$) discretized into 3 Tertiles:
 - **Low Cooling Potential (Class 1):** $\Delta T \le {t_low:.2f}^\circ\text{{C}}$
@@ -151,21 +167,18 @@ def write_report_summary(eval_svr, eval_fuzzy, svr_cfg, tertiles, champion_name)
 
 ## 1. Quantitative Performance Comparison on Held-out Test Set
 
-| Metric | SVR ({svr_cfg['kernel'].upper()} Kernel) | NN-KKT Fuzzy Regression |
-| :--- | :---: | :---: |
-| **R² Score (Continuous)** | **{eval_svr['r2']:.4f}** | **{eval_fuzzy['r2']:.4f}** |
-| **RMSE (Continuous)** | **{eval_svr['rmse']:.3f} °C** | **{eval_fuzzy['rmse']:.3f} °C** |
-| **MAE (Continuous)** | **{eval_svr['mae']:.3f} °C** | **{eval_fuzzy['mae']:.3f} °C** |
-| **Overall Accuracy** | **{eval_svr['overall_accuracy']*100:.2f}%** | **{eval_fuzzy['overall_accuracy']*100:.2f}%** |
-| **Balanced Accuracy** | **{eval_svr['balanced_accuracy']*100:.2f}%** | **{eval_fuzzy['balanced_accuracy']*100:.2f}%** |
-| **Macro Precision** | **{eval_svr['macro_precision']*100:.2f}%** | **{eval_fuzzy['macro_precision']*100:.2f}%** |
-| **Macro Recall** | **{eval_svr['macro_recall']*100:.2f}%** | **{eval_fuzzy['macro_recall']*100:.2f}%** |
-| **Macro F1-Score** | **{eval_svr['macro_f1']*100:.2f}%** | **{eval_fuzzy['macro_f1']*100:.2f}%** |
+| Metric | k-NN (Selected k={best_k}) | SVR ({svr_cfg['kernel'].upper()} Kernel) | NN-KKT Fuzzy Regression |
+| :--- | :---: | :---: | :---: |
+| **Overall Accuracy** | **{eval_knn['overall_accuracy']*100:.2f}%** | **{eval_svr['overall_accuracy']*100:.2f}%** | **{eval_fuzzy['overall_accuracy']*100:.2f}%** |
+| **Balanced Accuracy** | **{eval_knn['balanced_accuracy']*100:.2f}%** | **{eval_svr['balanced_accuracy']*100:.2f}%** | **{eval_fuzzy['balanced_accuracy']*100:.2f}%** |
+| **Macro Precision** | **{eval_knn['macro_precision']*100:.2f}%** | **{eval_svr['macro_precision']*100:.2f}%** | **{eval_fuzzy['macro_precision']*100:.2f}%** |
+| **Macro Recall** | **{eval_knn['macro_recall']*100:.2f}%** | **{eval_svr['macro_recall']*100:.2f}%** | **{eval_fuzzy['macro_recall']*100:.2f}%** |
+| **Macro F1-Score** | **{eval_knn['macro_f1']*100:.2f}%** | **{eval_svr['macro_f1']*100:.2f}%** | **{eval_fuzzy['macro_f1']*100:.2f}%** |
 
 ### Class-Wise Recall
-* **Low Cooling Recall:** SVR = `{eval_svr['class_recalls'][0]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][0]*100:.2f}%`
-* **Moderate Cooling Recall:** SVR = `{eval_svr['class_recalls'][1]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][1]*100:.2f}%`
-* **High Cooling Recall:** SVR = `{eval_svr['class_recalls'][2]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][2]*100:.2f}%`
+* **Low Cooling Recall:** k-NN = `{eval_knn['class_recalls']['Low']*100:.2f}%` | SVR = `{eval_svr['class_recalls'][0]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][0]*100:.2f}%`
+* **Moderate Cooling Recall:** k-NN = `{eval_knn['class_recalls']['Moderate']*100:.2f}%` | SVR = `{eval_svr['class_recalls'][1]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][1]*100:.2f}%`
+* **High Cooling Recall:** k-NN = `{eval_knn['class_recalls']['High']*100:.2f}%` | SVR = `{eval_svr['class_recalls'][2]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][2]*100:.2f}%`
 
 ---
 
@@ -180,8 +193,10 @@ def write_report_summary(eval_svr, eval_fuzzy, svr_cfg, tertiles, champion_name)
 
 ## 3. Final Student Conclusion (Addressing Sheet Requirements)
 
-1. **Model Selection & Hyperparameters:**  
-   The RBF kernel demonstrated superior non-linear modeling capability for SVR with optimal parameters $C = {svr_cfg['C']}$, $\epsilon = {svr_cfg['epsilon']}$, and $\gamma = {svr_cfg['gamma']}$. Meanwhile, the Neural-Network-KKT Fuzzy Regression effectively learned asymmetric upper and lower uncertainty bounds, ensuring that thermal uncertainty across heterogeneous urban canopies is captured via Karush-Kuhn-Tucker inclusion constraints.
+1. **Selected k and Model Hyperparameters:**  
+   - **Selected k for k-NN:** Optimal $k = {best_k}$ was selected via validation Balanced Accuracy tuning ($k$ vs validation score curve).
+   - **SVR Hyperparameters:** The {svr_cfg['kernel'].upper()} kernel achieved optimal generalization with regularization $C = {svr_cfg['C']}$, tube $\epsilon = {svr_cfg['epsilon']}$, and $\gamma = {svr_cfg['gamma']}$.
+   - **Neural-Network-KKT Fuzzy Regression:** Effectively learned asymmetric upper and lower uncertainty bounds, ensuring that thermal uncertainty across heterogeneous urban canopies is bounded via Karush-Kuhn-Tucker inclusion constraints.
 
 2. **Class-Specific Error Analysis:**  
    Most misclassifications occurred between adjacent classes (Low $\leftrightarrow$ Moderate and Moderate $\leftrightarrow$ High) near the tertile boundaries (${t_low:.2f}^\circ\text{{C}}$ and ${t_high:.2f}^\circ\text{{C}}$). Zero or negligible misclassifications occurred between the extreme Low and High classes. Moderate cooling potential exhibits the highest variance due to mixed land-cover pixels (small residential parks surrounded by high-density asphalt).

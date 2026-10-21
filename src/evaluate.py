@@ -15,6 +15,31 @@ plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.
 plt.rcParams['font.sans-serif'] = 'DejaVu Sans'
 plt.rcParams['font.size'] = 11
 
+def plot_k_vs_validation_score(tuning_df, best_k, output_path="outputs/plots/k_vs_validation_score.png"):
+    """
+    Plots the validation accuracy and balanced accuracy across k neighbours to identify optimal k.
+    """
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    plt.figure(figsize=(9, 5.5), dpi=300)
+    
+    plt.plot(tuning_df['k'], tuning_df['train_accuracy'], marker='o', linestyle='--', color='#2b5c8f', label='Training Accuracy', alpha=0.7)
+    plt.plot(tuning_df['k'], tuning_df['val_accuracy'], marker='s', color='#2ca02c', linewidth=2, label='Validation Overall Accuracy')
+    plt.plot(tuning_df['k'], tuning_df['val_balanced_accuracy'], marker='^', color='#d62728', linewidth=2, label='Validation Balanced Accuracy')
+    
+    best_row = tuning_df[tuning_df['k'] == best_k].iloc[0]
+    plt.axvline(x=best_k, color='#e377c2', linestyle=':', linewidth=2, label=f'Selected k = {best_k}')
+    plt.scatter([best_k], [best_row['val_balanced_accuracy']], color='#d62728', s=120, zorder=5, edgecolor='black')
+    
+    plt.title("Assignment 4: k-NN Hyperparameter Tuning (k vs Validation Score)", fontsize=13, fontweight='bold', pad=12)
+    plt.xlabel("Number of Nearest Neighbours (k)", fontsize=11, labelpad=8)
+    plt.ylabel("Accuracy Score", fontsize=11, labelpad=8)
+    plt.xticks(tuning_df['k'])
+    plt.legend(frameon=True, facecolor='white', framealpha=0.9)
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+    print(f"Saved: {output_path}")
+
 def plot_svr_kernel_comparison(results_df, output_path="outputs/plots/svr_kernel_comparison.png"):
     """
     Plots the validation performance across SVR Kernels (RBF, Poly, Linear) and C parameters.
