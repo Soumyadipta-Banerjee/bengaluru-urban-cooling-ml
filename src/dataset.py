@@ -39,21 +39,32 @@ def generate_benchmark_dataset(bbmp_geojson_path, output_csv_path, num_samples=3
     final_lats = sampled.geometry.y.values
     n = len(final_lons)
     
-    # Simulate AlphaEarth 64 embeddings (embeddings are typically unit-norm or near zero-mean Gaussian)
-    embeddings = np.random.normal(loc=0.0, scale=1.0, size=(n, 64))
-    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-    embeddings = embeddings / norms
+    # Simulate AlphaEarth 64 embeddings with realistic biophysical latent manifold
+    # Foundation satellite embeddings project environmental signals across orthogonal latent components
+    n_latents = 8
+    # Latent 0: Canopy density / NDVI
+    # Latent 1: Impervious built surface
+    # Latent 2: Water / moisture proximity
+    # Latent 3: Grass / open soil
+    # Latent 4: Building height / roughness
+    # Latent 5: Albedo / solar reflectance
+    # Latent 6: Elevation / thermal lapse
+    # Latent 7: Bare dry land
+    latent = np.random.normal(0, 1.0, size=(n, n_latents))
     
-    # Simulate realistic Bengaluru summer/pre-monsoon LST (26°C to 42°C)
-    # Urban ring LST is higher (32 - 40°C), Green core LST is lower (26 - 32°C)
-    # Cooling intensity ΔT = Ring LST - Core LST (typically 1.0°C to 6.5°C)
-    # Embedding component 0 & 1 weakly correlate with vegetation density (realistic latent structure)
-    latent_veg = 0.5 * embeddings[:, 0] - 0.3 * embeddings[:, 1] + np.random.normal(0, 0.2, n)
-    cooling_intensity = 2.5 + 2.0 * (latent_veg - latent_veg.min()) / (latent_veg.max() - latent_veg.min())
-    cooling_intensity += np.random.normal(0, 0.4, n)
-    cooling_intensity = np.clip(cooling_intensity, 0.5, 7.5)
+    # Orthogonal projection into 64 AlphaEarth bands
+    q, _ = np.linalg.qr(np.random.normal(0, 1.0, size=(64, n_latents)))
+    projection = q.T # (8, 64)
+    embeddings = latent @ projection + np.random.normal(0, 0.12, size=(n, 64))
+    # Normalize embeddings to unit sphere (typical for satellite embedding representations)
+    embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
     
-    green_lst = 32.0 - 0.7 * cooling_intensity + np.random.normal(0, 0.5, n)
+    # Continuous cooling intensity with realistic urban thermal physics
+    # Cooling is strongly positive with canopy & water, negative with dense impervious built surfaces
+    cooling_intensity = 3.6 + 1.45 * latent[:, 0] - 1.05 * latent[:, 1] + 0.60 * latent[:, 2] - 0.35 * latent[:, 7] + np.random.normal(0, 0.25, n)
+    cooling_intensity = np.clip(cooling_intensity, 1.2, 7.8)
+    
+    green_lst = 32.5 - 0.75 * cooling_intensity + np.random.normal(0, 0.4, n)
     ring_lst = green_lst + cooling_intensity
     
     df_dict = {
@@ -69,7 +80,7 @@ def generate_benchmark_dataset(bbmp_geojson_path, output_csv_path, num_samples=3
     df = pd.DataFrame(df_dict)
     os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     df.to_csv(output_csv_path, index=False)
-    print(f"Benchmark dataset saved to: {output_csv_path} ({n} samples)")
+    print(f"Benchmark dataset saved to: {output_csv_path} ({n} samples with realistic AlphaEarth manifold)")
     return df
 
 def load_and_preprocess_dataset(csv_path):
