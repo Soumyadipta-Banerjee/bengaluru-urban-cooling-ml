@@ -73,14 +73,12 @@ def tune_svr_kernels(X_train, y_cont_train, y_train_class,
     """
     print("\n--- Tuning Support Vector Regression (SVR) with Kernels ---")
     param_configs = [
-        {'kernel': 'rbf', 'C': 1.0, 'epsilon': 0.1, 'gamma': 'scale', 'degree': 2},
-        {'kernel': 'rbf', 'C': 10.0, 'epsilon': 0.1, 'gamma': 'scale', 'degree': 2},
-        {'kernel': 'rbf', 'C': 50.0, 'epsilon': 0.05, 'gamma': 'scale', 'degree': 2},
-        {'kernel': 'rbf', 'C': 10.0, 'epsilon': 0.1, 'gamma': 0.05, 'degree': 2},
-        {'kernel': 'poly', 'C': 1.0, 'epsilon': 0.1, 'gamma': 'scale', 'degree': 2},
-        {'kernel': 'poly', 'C': 10.0, 'epsilon': 0.1, 'gamma': 'scale', 'degree': 2},
-        {'kernel': 'linear', 'C': 1.0, 'epsilon': 0.1, 'gamma': 'scale', 'degree': 2},
-        {'kernel': 'linear', 'C': 10.0, 'epsilon': 0.1, 'gamma': 'scale', 'degree': 2},
+        {'kernel': 'rbf', 'C': 50.0, 'epsilon': 0.01, 'gamma': 0.015, 'degree': 2},
+        {'kernel': 'rbf', 'C': 20.0, 'epsilon': 0.02, 'gamma': 0.02, 'degree': 2},
+        {'kernel': 'rbf', 'C': 10.0, 'epsilon': 0.05, 'gamma': 'scale', 'degree': 2},
+        {'kernel': 'rbf', 'C': 5.0, 'epsilon': 0.05, 'gamma': 0.02, 'degree': 2},
+        {'kernel': 'poly', 'C': 10.0, 'epsilon': 0.05, 'gamma': 'scale', 'degree': 2},
+        {'kernel': 'linear', 'C': 10.0, 'epsilon': 0.05, 'gamma': 'scale', 'degree': 2},
     ]
 
     best_val_score = -1.0

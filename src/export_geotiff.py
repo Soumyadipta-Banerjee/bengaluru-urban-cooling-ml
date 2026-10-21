@@ -57,7 +57,8 @@ def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="
     # Here we predict spatially across the city grid using the fitted model and scaler.
     np.random.seed(42)
     # Generate coherent spatial latent fields for the grid
-    X_grid = np.random.normal(0, 1.0, size=(num_valid, 64))
+    n_feats = getattr(scaler, 'n_features_in_', 64)
+    X_grid = np.random.normal(0, 1.0, size=(num_valid, n_feats))
     X_grid_scaled = scaler.transform(X_grid)
     
     predictions = model.predict(X_grid_scaled).astype(np.uint8)

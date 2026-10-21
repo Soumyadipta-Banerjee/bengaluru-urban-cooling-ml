@@ -97,7 +97,7 @@ def main():
                           output_path="outputs/plots/confusion_matrix_svr.png")
 
     # 5. Model 3: Neural-Network-KKT Fuzzy Regression
-    fuzzy_nn = FuzzyKKTRegressionModel(input_dim=64, hidden_dim=128, alpha=0.01, beta=8.0, epochs=60, lr=0.003)
+    fuzzy_nn = FuzzyKKTRegressionModel(input_dim=X_train.shape[1], hidden_dim=128, alpha=0.005, beta=10.0, epochs=60, lr=0.003)
     fuzzy_nn.fit(X_train, y_cont_train, tertiles)
 
     eval_fuzzy = evaluate_model_pipeline(

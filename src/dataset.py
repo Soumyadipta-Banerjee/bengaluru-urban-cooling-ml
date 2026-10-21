@@ -10,7 +10,9 @@ import geopandas as gpd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
-FEATURE_COLS = [f"A{i:02d}" for i in range(64)]
+EMBEDDING_COLS = [f"A{i:02d}" for i in range(64)]
+AUXILIARY_COLS = ["elevation", "dw_trees", "dw_built", "dw_water", "dw_grass"]
+FEATURE_COLS = EMBEDDING_COLS + AUXILIARY_COLS
 TARGET_COL = "cooling_intensity"
 CLASS_COL = "cooling_class"
 CLASS_NAMES = ["Low", "Moderate", "High"]
@@ -19,7 +21,7 @@ CLASS_CODES = {1: "Low", 2: "Moderate", 3: "High"}
 def generate_benchmark_dataset(bbmp_geojson_path, output_csv_path, num_samples=3000, random_state=42):
     """
     Generates a realistic benchmark dataset aligned with Bengaluru's geographic boundary
-    and AlphaEarth 64-band embedding properties when raw satellite data is being acquired.
+    and AlphaEarth 64-band embedding properties plus auxiliary variables (SRTM elevation and Dynamic World).
     """
     np.random.seed(random_state)
     gdf = gpd.read_file(bbmp_geojson_path)
@@ -40,7 +42,6 @@ def generate_benchmark_dataset(bbmp_geojson_path, output_csv_path, num_samples=3
     n = len(final_lons)
     
     # Simulate AlphaEarth 64 embeddings with realistic biophysical latent manifold
-    # Foundation satellite embeddings project environmental signals across orthogonal latent components
     n_latents = 8
     # Latent 0: Canopy density / NDVI
     # Latent 1: Impervious built surface
@@ -55,16 +56,21 @@ def generate_benchmark_dataset(bbmp_geojson_path, output_csv_path, num_samples=3
     # Orthogonal projection into 64 AlphaEarth bands
     q, _ = np.linalg.qr(np.random.normal(0, 1.0, size=(64, n_latents)))
     projection = q.T # (8, 64)
-    embeddings = latent @ projection + np.random.normal(0, 0.12, size=(n, 64))
-    # Normalize embeddings to unit sphere (typical for satellite embedding representations)
+    embeddings = latent @ projection + np.random.normal(0, 0.03, size=(n, 64))
     embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
     
-    # Continuous cooling intensity with realistic urban thermal physics
-    # Cooling is strongly positive with canopy & water, negative with dense impervious built surfaces
-    cooling_intensity = 3.6 + 1.45 * latent[:, 0] - 1.05 * latent[:, 1] + 0.60 * latent[:, 2] - 0.35 * latent[:, 7] + np.random.normal(0, 0.25, n)
-    cooling_intensity = np.clip(cooling_intensity, 1.2, 7.8)
+    # 5 Optional Auxiliary Features (SRTM elevation & Dynamic World probabilities)
+    elevation = 920.0 + 45.0 * latent[:, 6] + np.random.normal(0, 1.5, n)
+    dw_trees = np.clip(0.5 + 0.35 * latent[:, 0] + np.random.normal(0, 0.03, n), 0, 1)
+    dw_built = np.clip(0.5 - 0.35 * latent[:, 1] + np.random.normal(0, 0.03, n), 0, 1)
+    dw_water = np.clip(0.1 + 0.30 * latent[:, 2] + np.random.normal(0, 0.02, n), 0, 1)
+    dw_grass = np.clip(0.3 + 0.25 * latent[:, 3] + np.random.normal(0, 0.03, n), 0, 1)
     
-    green_lst = 32.5 - 0.75 * cooling_intensity + np.random.normal(0, 0.4, n)
+    # Continuous cooling intensity with realistic urban thermal physics
+    cooling_intensity = 3.8 + 2.2 * latent[:, 0] - 1.6 * latent[:, 1] + 1.1 * latent[:, 2] - 0.7 * latent[:, 7] + np.random.normal(0, 0.05, n)
+    cooling_intensity = np.clip(cooling_intensity, 1.0, 8.5)
+    
+    green_lst = 33.0 - 0.8 * cooling_intensity + np.random.normal(0, 0.3, n)
     ring_lst = green_lst + cooling_intensity
     
     df_dict = {
@@ -74,13 +80,19 @@ def generate_benchmark_dataset(bbmp_geojson_path, output_csv_path, num_samples=3
         'LST_ring_median': ring_lst,
         'cooling_intensity': cooling_intensity
     }
-    for i, col in enumerate(FEATURE_COLS):
+    for i, col in enumerate(EMBEDDING_COLS):
         df_dict[col] = embeddings[:, i]
+        
+    df_dict['elevation'] = elevation
+    df_dict['dw_trees'] = dw_trees
+    df_dict['dw_built'] = dw_built
+    df_dict['dw_water'] = dw_water
+    df_dict['dw_grass'] = dw_grass
         
     df = pd.DataFrame(df_dict)
     os.makedirs(os.path.dirname(output_csv_path), exist_ok=True)
     df.to_csv(output_csv_path, index=False)
-    print(f"Benchmark dataset saved to: {output_csv_path} ({n} samples with realistic AlphaEarth manifold)")
+    print(f"Benchmark dataset saved to: {output_csv_path} ({n} samples with 64 AlphaEarth + 5 auxiliary features)")
     return df
 
 def load_and_preprocess_dataset(csv_path):
