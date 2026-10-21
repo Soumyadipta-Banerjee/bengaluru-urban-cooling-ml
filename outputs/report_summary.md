@@ -13,15 +13,15 @@
 | Metric | k-NN (Selected k=17) | SVR (RBF Kernel) | NN-KKT Fuzzy Regression |
 | :--- | :---: | :---: | :---: |
 | **Overall Accuracy** | **83.37%** | **93.00%** | **94.53%** |
-| **Balanced Accuracy** | **83.37%** | **92.98%** | **94.53%** |
-| **Macro Precision** | **83.38%** | **93.10%** | **94.52%** |
-| **Macro Recall** | **83.37%** | **92.98%** | **94.53%** |
+| **Balanced Accuracy** | **83.37%** | **92.98%** | **94.54%** |
+| **Macro Precision** | **83.38%** | **93.10%** | **94.61%** |
+| **Macro Recall** | **83.37%** | **92.98%** | **94.54%** |
 | **Macro F1-Score** | **83.37%** | **92.87%** | **94.46%** |
 
 ### Class-Wise Recall
-* **Low Cooling Recall:** k-NN = `88.48%` | SVR = `98.79%` | NN-KKT = `98.18%`
-* **Moderate Cooling Recall:** k-NN = `74.68%` | SVR = `83.77%` | NN-KKT = `88.31%`
-* **High Cooling Recall:** k-NN = `86.96%` | SVR = `96.38%` | NN-KKT = `97.10%`
+* **Low Cooling Recall:** k-NN = `88.48%` | SVR = `98.79%` | NN-KKT = `98.79%`
+* **Moderate Cooling Recall:** k-NN = `74.68%` | SVR = `83.77%` | NN-KKT = `87.01%`
+* **High Cooling Recall:** k-NN = `86.96%` | SVR = `96.38%` | NN-KKT = `97.83%`
 
 ---
 
