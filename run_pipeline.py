@@ -15,16 +15,19 @@ import numpy as np
 import pandas as pd
 import joblib
 
+from sklearn.neighbors import KNeighborsClassifier
+
 from src.dataset import (
     generate_benchmark_dataset, load_and_preprocess_dataset,
     spatial_stratified_split, FEATURE_COLS, TARGET_COL, CLASS_NAMES
 )
+from src.model import tune_knn, evaluate_model
 from src.models_svr_fuzzy import (
     tune_svr_kernels, FuzzyKKTRegressionModel, evaluate_model_pipeline
 )
 from src.evaluate import (
-    plot_svr_kernel_comparison, plot_fuzzy_kkt_intervals,
-    plot_confusion_matrix, plot_class_distribution
+    plot_k_vs_validation_score, plot_svr_kernel_comparison,
+    plot_fuzzy_kkt_intervals, plot_confusion_matrix, plot_class_distribution
 )
 from src.export_geotiff import (
     generate_spatial_geotiff, create_presentation_map_layout
@@ -67,12 +70,9 @@ def main():
 
     # 3. Model 1: k-Nearest Neighbours (Explicitly requested for 'k vs validation score' & 'selected k')
     print("\n--- Tuning k-Nearest Neighbours (k-NN) ---")
-    from src.model import tune_knn, evaluate_model
-    from src.evaluate import plot_k_vs_validation_score
     knn_tuning_df, best_k = tune_knn(X_train, y_train_class, X_val, y_val_class, k_values=list(range(1, 26, 2)))
     plot_k_vs_validation_score(knn_tuning_df, best_k, output_path="outputs/plots/k_vs_validation_score.png")
     
-    from sklearn.neighbors import KNeighborsClassifier
     best_knn = KNeighborsClassifier(n_neighbors=best_k, weights='distance', metric='euclidean')
     best_knn.fit(X_train, y_train_class)
     eval_knn, _ = evaluate_model(best_knn, X_test, y_test_class, class_names=CLASS_NAMES)

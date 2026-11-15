@@ -12,16 +12,16 @@
 
 | Metric | k-NN (Selected k=17) | SVR (RBF Kernel) | NN-KKT Fuzzy Regression |
 | :--- | :---: | :---: | :---: |
-| **Overall Accuracy** | **83.37%** | **93.00%** | **94.53%** |
-| **Balanced Accuracy** | **83.37%** | **92.98%** | **94.54%** |
-| **Macro Precision** | **83.38%** | **93.10%** | **94.61%** |
-| **Macro Recall** | **83.37%** | **92.98%** | **94.54%** |
-| **Macro F1-Score** | **83.37%** | **92.87%** | **94.46%** |
+| **Overall Accuracy** | **83.37%** | **92.34%** | **93.87%** |
+| **Balanced Accuracy** | **83.37%** | **92.34%** | **93.84%** |
+| **Macro Precision** | **83.38%** | **92.41%** | **93.90%** |
+| **Macro Recall** | **83.37%** | **92.34%** | **93.84%** |
+| **Macro F1-Score** | **83.37%** | **92.19%** | **93.77%** |
 
 ### Class-Wise Recall
-* **Low Cooling Recall:** k-NN = `88.48%` | SVR = `98.79%` | NN-KKT = `98.79%`
-* **Moderate Cooling Recall:** k-NN = `74.68%` | SVR = `83.77%` | NN-KKT = `87.01%`
-* **High Cooling Recall:** k-NN = `86.96%` | SVR = `96.38%` | NN-KKT = `97.83%`
+* **Low Cooling Recall:** k-NN = `88.48%` | SVR = `98.18%` | NN-KKT = `98.79%`
+* **Moderate Cooling Recall:** k-NN = `74.68%` | SVR = `82.47%` | NN-KKT = `86.36%`
+* **High Cooling Recall:** k-NN = `86.96%` | SVR = `96.38%` | NN-KKT = `96.38%`
 
 ---
 
@@ -38,7 +38,7 @@
 
 1. **Selected k and Model Hyperparameters:**  
    - **Selected k for k-NN:** Optimal $k = 17$ was selected via validation Balanced Accuracy tuning ($k$ vs validation score curve).
-   - **SVR Hyperparameters:** The RBF kernel achieved optimal generalization with regularization $C = 10.0$, tube $\epsilon = 0.05$, and $\gamma = scale$.
+   - **SVR Hyperparameters:** The RBF kernel achieved optimal generalization with regularization $C = 20.0$, tube $\epsilon = 0.02$, and $\gamma = 0.02$.
    - **Neural-Network-KKT Fuzzy Regression:** Effectively learned asymmetric upper and lower uncertainty bounds, ensuring that thermal uncertainty across heterogeneous urban canopies is bounded via Karush-Kuhn-Tucker inclusion constraints.
 
 2. **Class-Specific Error Analysis:**  

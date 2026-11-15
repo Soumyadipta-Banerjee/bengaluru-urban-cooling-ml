@@ -7,6 +7,7 @@ Outputs:
 
 import os
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 import rasterio
 from rasterio.transform import from_origin
@@ -108,7 +109,11 @@ def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="
     else:
         X_grid = embeddings
         
-    X_grid_scaled = scaler.transform(X_grid)
+    if hasattr(scaler, 'feature_names_in_'):
+        X_df = pd.DataFrame(X_grid, columns=scaler.feature_names_in_)
+        X_grid_scaled = scaler.transform(X_df)
+    else:
+        X_grid_scaled = scaler.transform(X_grid)
     predictions = model.predict(X_grid_scaled).astype(np.uint8)
     cooling_grid[valid_indices] = predictions
     

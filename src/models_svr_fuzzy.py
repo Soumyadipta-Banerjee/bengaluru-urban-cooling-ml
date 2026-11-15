@@ -44,7 +44,7 @@ class SVRClassifierWrapper:
     """
     Wraps SVR to act as both a continuous regressor and a 3-class tertile classifier.
     """
-    def __init__(self, kernel='rbf', C=10.0, epsilon=0.1, gamma='scale', degree=2, max_iter=3000):
+    def __init__(self, kernel='rbf', C=10.0, epsilon=0.1, gamma='scale', degree=2, max_iter=-1):
         self.kernel = kernel
         self.C = C
         self.epsilon = epsilon
@@ -90,7 +90,7 @@ def tune_svr_kernels(X_train, y_cont_train, y_train_class,
         print(f"  Testing SVR [{cfg['kernel'].upper()} kernel, C={cfg['C']}, gamma={cfg['gamma']}]...")
         wrapper = SVRClassifierWrapper(
             kernel=cfg['kernel'], C=cfg['C'], epsilon=cfg['epsilon'],
-            gamma=cfg['gamma'], degree=cfg['degree'], max_iter=3000
+            gamma=cfg['gamma'], degree=cfg['degree']
         )
         wrapper.fit(X_train, y_cont_train, tertiles)
         
@@ -209,6 +209,8 @@ class FuzzyKKTRegressionModel:
         self.tertiles = None
 
     def fit(self, X_train, y_cont_train, tertiles, X_val=None, y_cont_val=None):
+        torch.manual_seed(42)
+        np.random.seed(42)
         self.tertiles = tertiles
         self.net = FuzzyKKTNetwork(input_dim=self.input_dim, hidden_dim=self.hidden_dim).to(self.device)
         criterion = FuzzyKKTLoss(alpha=self.alpha, beta=self.beta)

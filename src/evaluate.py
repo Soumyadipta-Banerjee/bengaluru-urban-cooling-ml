@@ -50,7 +50,7 @@ def plot_svr_kernel_comparison(results_df, output_path="outputs/plots/svr_kernel
     # Group by kernel and C, taking max validation balanced accuracy
     grouped = results_df.groupby(['kernel', 'C'])['val_bal_acc'].max().unstack()
     
-    ax = grouped.plot(kind='bar', figsize=(9, 5.5), colormap='viridis', edgecolor='black', width=0.8)
+    ax = grouped.plot(kind='bar', ax=plt.gca(), colormap='viridis', edgecolor='black', width=0.8)
     plt.title("Support Vector Regression: Kernel & Regularization (C) Comparison", fontsize=13, fontweight='bold', pad=12)
     plt.xlabel("SVR Kernel Type", fontsize=11, labelpad=8)
     plt.ylabel("Validation Balanced Accuracy", fontsize=11, labelpad=8)
