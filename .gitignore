@@ -44,3 +44,12 @@ myenv/
 # Temporary files & logs
 *.log
 .system_generated/
+
+# Viva documentation (Local only - do not push)
+*.docx
+VIVA_*.md
+FOLDER_*.md
+AAT_Report_*.md
+REPORT_*.md
+outputs/01_Urban_Cooling/
+outputs/*.zip

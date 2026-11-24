@@ -20,13 +20,15 @@ This repository contains the complete implementation for **Assignment 4: Urban C
 │   ├── dataset.py                       # Data loading, 3-class tertiles, spatial stratified split (70/15/15)
 │   ├── models_svr_fuzzy.py              # SVR (RBF, Poly, Linear) & Neural-Network-KKT Fuzzy Regression
 │   ├── evaluate.py                      # Plots (kernel comparison, KKT intervals, confusion matrices)
-│   └── export_geotiff.py                # 30 m GeoTIFF generation in EPSG:32643 & Presentation Map layout
+│   ├── export_geotiff.py                # 30 m GeoTIFF generation in EPSG:32643 & Presentation Map layout
+│   └── generate_reference_outputs.py   # Standardized 300 DPI reference deliverables generator
 ├── outputs/
 │   ├── maps/
 │   │   ├── bengaluru_cooling_potential_30m.tif  # Required GeoTIFF (EPSG:32643, 30 m resolution)
 │   │   ├── bengaluru_cooling_map_presentation.png # High-res cartographic map with legend & scale
 │   │   └── bengaluru_cooling_map_presentation.pdf # PDF format for report submission
 │   ├── plots/
+│   │   ├── methodology_flowchart.png    # High-resolution end-to-end architecture flowchart
 │   │   ├── svr_kernel_comparison.png    # Validation balanced accuracy across kernels & C
 │   │   ├── fuzzy_kkt_bounds.png         # Fuzzy inclusion interval [y_lower, y_upper] & true ΔT
 │   │   ├── confusion_matrix_svr.png     # SVR 3-class test confusion matrix
