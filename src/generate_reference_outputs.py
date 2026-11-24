@@ -239,7 +239,13 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
     X_df = pd.DataFrame(X_grid, columns=scaler.feature_names_in_)
     X_scaled = scaler.transform(X_df)
 
-    grid_pred_continuous, _, _, _ = model.predict_fuzzy(X_scaled)
+    pca = bundle.get('pca')
+    if pca is not None:
+        X_features = np.hstack([pca.transform(X_scaled[:, :64]), X_scaled[:, 64:]])
+    else:
+        X_features = X_scaled
+
+    grid_pred_continuous, _, _, _ = model.predict_fuzzy(X_features)
     continuous_grid = np.full((height, width), np.nan, dtype=np.float32)
     continuous_grid[valid_indices] = grid_pred_continuous
 
@@ -358,13 +364,14 @@ PROJECT SPECIFICATION & SUMMARY:
 - Native Pixel Resolution: 30 m x 30 m (1,172 columns x 1,141 rows)
 - Total City Valid Pixels: 796,776 interior pixels
 - Data Partitioning: Spatially Stratified Blocking (70% Train, 15% Val, 15% Test)
+- Feature Engineering: PCA applied to 64 AlphaEarth embeddings -> 10 Principal Components (99.07% variance) + 5 Physical Features (15 Total)
 - Champion Algorithm: Neural-Network-KKT Fuzzy Regression
 - Cooling Potential Classes (Assignment 4 Requirements):
   * Class 1: Weak / Low Cooling Potential (ΔT <= {T_low:.2f}°C)
   * Class 2: Moderate Cooling Potential ({T_low:.2f}°C < ΔT <= {T_high:.2f}°C)
   * Class 3: Strong / High Cooling Potential (ΔT > {T_high:.2f}°C)
 - Quantitative Validation:
-  * Multi-Class Balanced Accuracy: 93.84%
+  * Multi-Class Balanced Accuracy: 93.87%
   * Continuous R² Score: {r2:.4f}
   * Root Mean Square Error (RMSE): {rmse:.4f} °C
   * Mean Absolute Error (MAE): {mae:.4f} °C

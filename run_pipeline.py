@@ -27,7 +27,8 @@ from src.models_svr_fuzzy import (
 )
 from src.evaluate import (
     plot_k_vs_validation_score, plot_svr_kernel_comparison,
-    plot_fuzzy_kkt_intervals, plot_confusion_matrix, plot_class_distribution
+    plot_fuzzy_kkt_intervals, plot_confusion_matrix, plot_class_distribution,
+    plot_pca_scree_variance
 )
 from src.export_geotiff import (
     generate_spatial_geotiff, create_presentation_map_layout
@@ -63,10 +64,15 @@ def main():
     X_val, y_val_class, y_cont_val = data['X_val'], data['y_val'], data['y_cont_val']
     X_test, y_test_class, y_cont_test = data['X_test'], data['y_test'], data['y_cont_test']
     scaler = data['scaler']
+    pca = data.get('pca')
     tertiles = data['tertiles']
 
     # Plot class distribution across splits
     plot_class_distribution(y_train_class, y_val_class, y_test_class, class_names=CLASS_NAMES)
+    
+    # Plot PCA Scree plot if PCA was applied
+    if pca is not None:
+        plot_pca_scree_variance(pca, selected_k=10, output_path="outputs/plots/pca_scree_variance.png")
 
     # 3. Model 1: k-Nearest Neighbours (Explicitly requested for 'k vs validation score' & 'selected k')
     print("\n--- Tuning k-Nearest Neighbours (k-NN) ---")
@@ -128,6 +134,7 @@ def main():
     joblib.dump({
         'model': champion_model,
         'scaler': scaler,
+        'pca': pca,
         'tertiles': tertiles,
         'model_name': champion_name
     }, "outputs/models/champion_model.joblib")
@@ -137,7 +144,8 @@ def main():
     cooling_grid, transform, bounds = generate_spatial_geotiff(
         champion_model, scaler, bbmp_path,
         output_tif_path="outputs/maps/bengaluru_cooling_potential_30m.tif",
-        resolution=30
+        resolution=30,
+        pca=pca
     )
 
     # Create Presentation Map Layout (PNG & PDF)

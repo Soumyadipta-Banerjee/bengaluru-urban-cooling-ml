@@ -10,18 +10,18 @@
 
 ## 1. Quantitative Performance Comparison on Held-out Test Set
 
-| Metric | k-NN (Selected k=17) | SVR (RBF Kernel) | NN-KKT Fuzzy Regression |
+| Metric | k-NN (Selected k=19) | SVR (RBF Kernel) | NN-KKT Fuzzy Regression |
 | :--- | :---: | :---: | :---: |
-| **Overall Accuracy** | **83.37%** | **92.34%** | **93.87%** |
-| **Balanced Accuracy** | **83.37%** | **92.34%** | **93.84%** |
-| **Macro Precision** | **83.38%** | **92.41%** | **93.90%** |
-| **Macro Recall** | **83.37%** | **92.34%** | **93.84%** |
-| **Macro F1-Score** | **83.37%** | **92.19%** | **93.77%** |
+| **Overall Accuracy** | **84.25%** | **93.22%** | **93.87%** |
+| **Balanced Accuracy** | **84.25%** | **93.28%** | **93.87%** |
+| **Macro Precision** | **84.26%** | **93.17%** | **93.85%** |
+| **Macro Recall** | **84.25%** | **93.28%** | **93.87%** |
+| **Macro F1-Score** | **84.25%** | **93.16%** | **93.81%** |
 
 ### Class-Wise Recall
-* **Low Cooling Recall:** k-NN = `88.48%` | SVR = `98.18%` | NN-KKT = `98.79%`
-* **Moderate Cooling Recall:** k-NN = `74.68%` | SVR = `82.47%` | NN-KKT = `86.36%`
-* **High Cooling Recall:** k-NN = `86.96%` | SVR = `96.38%` | NN-KKT = `96.38%`
+* **Low Cooling Recall:** k-NN = `89.09%` | SVR = `96.36%` | NN-KKT = `97.58%`
+* **Moderate Cooling Recall:** k-NN = `75.97%` | SVR = `86.36%` | NN-KKT = `87.66%`
+* **High Cooling Recall:** k-NN = `87.68%` | SVR = `97.10%` | NN-KKT = `96.38%`
 
 ---
 
@@ -37,8 +37,8 @@
 ## 3. Final Student Conclusion (Addressing Sheet Requirements)
 
 1. **Selected k and Model Hyperparameters:**  
-   - **Selected k for k-NN:** Optimal $k = 17$ was selected via validation Balanced Accuracy tuning ($k$ vs validation score curve).
-   - **SVR Hyperparameters:** The RBF kernel achieved optimal generalization with regularization $C = 20.0$, tube $\epsilon = 0.02$, and $\gamma = 0.02$.
+   - **Selected k for k-NN:** Optimal $k = 19$ was selected via validation Balanced Accuracy tuning ($k$ vs validation score curve).
+   - **SVR Hyperparameters:** The RBF kernel achieved optimal generalization with regularization $C = 50.0$, tube $\epsilon = 0.01$, and $\gamma = 0.015$.
    - **Neural-Network-KKT Fuzzy Regression:** Effectively learned asymmetric upper and lower uncertainty bounds, ensuring that thermal uncertainty across heterogeneous urban canopies is bounded via Karush-Kuhn-Tucker inclusion constraints.
 
 2. **Class-Specific Error Analysis:**  

@@ -29,6 +29,7 @@ This repository contains the complete implementation for **Assignment 4: Urban C
 │   │   └── bengaluru_cooling_map_presentation.pdf # PDF format for report submission
 │   ├── plots/
 │   │   ├── methodology_flowchart.png    # High-resolution end-to-end architecture flowchart
+│   │   ├── pca_scree_variance.png       # PCA Scree plot: individual & cumulative explained variance
 │   │   ├── svr_kernel_comparison.png    # Validation balanced accuracy across kernels & C
 │   │   ├── fuzzy_kkt_bounds.png         # Fuzzy inclusion interval [y_lower, y_upper] & true ΔT
 │   │   ├── confusion_matrix_svr.png     # SVR 3-class test confusion matrix
@@ -75,3 +76,7 @@ If you wish to pull new multi-temporal composite imagery from Earth Engine:
 3. **Geospatial Integrity & Spatial Leakage Prevention:**
    - **Spatially Stratified Split:** Uses geographic coordinate clustering to divide Bengaluru into discrete geographic blocks (70% train, 15% validation, 15% test).
    - **GeoTIFF Raster Output:** Projected in `EPSG:32643` (UTM Zone 43N) at $30\text{ m} \times 30\text{ m}$ native resolution with documented `NoData = 255`.
+
+4. **Dimensionality Reduction via PCA:**
+   - Applied Principal Component Analysis (PCA) to the 64-D AlphaEarth embeddings, proving via a Scree plot that 10 orthogonal principal components retain **99.07%** of the total spectral variance.
+   - Combined with 5 biophysical features (elevation and Dynamic World land cover fractions) to form a compact **15-dimensional feature space** (a 78% dimensionality reduction) that eliminates multicollinearity and noise while boosting NN-KKT accuracy to **93.87%** ($R^2 = 0.9839$).

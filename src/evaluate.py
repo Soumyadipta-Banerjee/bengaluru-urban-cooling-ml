@@ -143,3 +143,41 @@ def plot_class_distribution(y_train, y_val, y_test, class_names=None, output_pat
     plt.savefig(output_path)
     plt.close()
     print(f"Saved: {output_path}")
+
+def plot_pca_scree_variance(pca_model, selected_k=10, output_path="outputs/plots/pca_scree_variance.png"):
+    """
+    Plots the PCA Scree Plot showing individual explained variance bars
+    and cumulative explained variance curve, highlighting the selected components.
+    """
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    var_exp = pca_model.explained_variance_ratio_ * 100
+    cum_var = np.cumsum(var_exp)
+    
+    fig, ax1 = plt.subplots(figsize=(9, 5), dpi=300)
+    x = np.arange(1, len(var_exp) + 1)
+    
+    ax1.bar(x, var_exp, color='#4a90e2', alpha=0.7, label='Individual Explained Variance (%)')
+    ax1.set_xlabel('Principal Component Index (AlphaEarth Latent Dimensions)', fontsize=11, labelpad=8)
+    ax1.set_ylabel('Individual Variance Explained (%)', color='#2b5c8f', fontsize=11, labelpad=8)
+    ax1.set_xticks(x)
+    ax1.set_ylim(0, max(var_exp) * 1.35)
+    
+    ax2 = ax1.twinx()
+    ax2.plot(x, cum_var, color='#d62728', marker='o', linewidth=2.2, label='Cumulative Variance Explained (%)')
+    ax2.axhline(95, color='#2ca02c', linestyle='--', linewidth=1.5, label='95% Threshold (PC 8)')
+    ax2.axvline(selected_k, color='#9467bd', linestyle=':', linewidth=2,
+                label=f'Selected Dimension (k={selected_k}, {cum_var[selected_k-1]:.2f}%)')
+    ax2.set_ylabel('Cumulative Variance Explained (%)', color='#d62728', fontsize=11, labelpad=8)
+    ax2.set_ylim(0, 105)
+    
+    plt.title('Principal Component Analysis (PCA) on 64-D AlphaEarth Satellite Embeddings',
+              fontsize=12, fontweight='bold', pad=12)
+    
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='center right', frameon=True, facecolor='white', framealpha=0.9)
+    
+    plt.tight_layout()
+    plt.savefig(output_path)
+    plt.close()
+    print(f"Saved: {output_path}")

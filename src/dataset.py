@@ -9,6 +9,7 @@ import pandas as pd
 import geopandas as gpd
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 EMBEDDING_COLS = [f"A{i:02d}" for i in range(64)]
 AUXILIARY_COLS = ["elevation", "dw_trees", "dw_built", "dw_water", "dw_grass"]
@@ -109,10 +110,12 @@ def load_and_preprocess_dataset(csv_path):
     print(f"Loaded dataset: {len(df)} samples (removed {initial_len - len(df)} duplicates/NoData).")
     return df
 
-def spatial_stratified_split(df, train_frac=0.70, val_frac=0.15, test_frac=0.15, n_clusters=20, random_state=42):
+def spatial_stratified_split(df, train_frac=0.70, val_frac=0.15, test_frac=0.15, n_clusters=20, random_state=42, apply_pca=True, n_pca_components=10):
     """
     Performs spatially stratified splitting using geographic spatial blocking (K-Means on coordinates).
     Prevents spatial autocorrelation / spatial leakage between training, validation, and testing sets.
+    Optionally applies Principal Component Analysis (PCA) on the 64 AlphaEarth embeddings
+    to reduce dimensionality and eliminate multicollinearity.
     """
     coords = df[['longitude', 'latitude']].values
     kmeans = KMeans(n_clusters=n_clusters, random_state=random_state, n_init=10)
@@ -180,6 +183,21 @@ def spatial_stratified_split(df, train_frac=0.70, val_frac=0.15, test_frac=0.15,
     X_val = scaler.transform(df_val[FEATURE_COLS])
     X_test = scaler.transform(df_test[FEATURE_COLS])
     
+    pca_model = None
+    pca_feat_names = FEATURE_COLS
+    if apply_pca:
+        pca_model = PCA(n_components=n_pca_components, random_state=random_state)
+        pca_model.fit(X_train[:, :64])
+        cum_var = np.cumsum(pca_model.explained_variance_ratio_)
+        
+        X_train = np.hstack([pca_model.transform(X_train[:, :64]), X_train[:, 64:]])
+        X_val = np.hstack([pca_model.transform(X_val[:, :64]), X_val[:, 64:]])
+        X_test = np.hstack([pca_model.transform(X_test[:, :64]), X_test[:, 64:]])
+        
+        pca_feat_names = [f"PC{i+1}" for i in range(n_pca_components)] + AUXILIARY_COLS
+        print(f"PCA Reduction: 64 AlphaEarth embeddings -> {n_pca_components} Principal Components "
+              f"({cum_var[-1]*100:.2f}% variance retained). Total active features: {X_train.shape[1]}")
+    
     y_train = df_train[CLASS_COL].values
     y_val = df_val[CLASS_COL].values
     y_test = df_test[CLASS_COL].values
@@ -193,6 +211,8 @@ def spatial_stratified_split(df, train_frac=0.70, val_frac=0.15, test_frac=0.15,
         'X_val': X_val, 'y_val': y_val, 'y_cont_val': y_cont_val, 'df_val': df_val,
         'X_test': X_test, 'y_test': y_test, 'y_cont_test': y_cont_test, 'df_test': df_test,
         'scaler': scaler,
+        'pca': pca_model,
+        'feature_names': pca_feat_names,
         'tertiles': (t_low, t_high)
     }
 

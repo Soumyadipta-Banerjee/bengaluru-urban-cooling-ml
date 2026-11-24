@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.colors import ListedColormap
 
-def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="outputs/maps/bengaluru_cooling_potential_30m.tif", resolution=30):
+def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="outputs/maps/bengaluru_cooling_potential_30m.tif", resolution=30, pca=None):
     os.makedirs(os.path.dirname(output_tif_path), exist_ok=True)
     
     # 1. Load BBMP boundary and reproject to EPSG:32643 (UTM Zone 43N)
@@ -114,7 +114,13 @@ def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="
         X_grid_scaled = scaler.transform(X_df)
     else:
         X_grid_scaled = scaler.transform(X_grid)
-    predictions = model.predict(X_grid_scaled).astype(np.uint8)
+        
+    if pca is not None:
+        X_features = np.hstack([pca.transform(X_grid_scaled[:, :64]), X_grid_scaled[:, 64:]])
+    else:
+        X_features = X_grid_scaled
+
+    predictions = model.predict(X_features).astype(np.uint8)
     cooling_grid[valid_indices] = predictions
     
     # 4. Write GeoTIFF
