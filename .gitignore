@@ -53,3 +53,5 @@ AAT_Report_*.md
 REPORT_*.md
 outputs/01_Urban_Cooling/
 outputs/*.zip
+outputs/maps/*wgs84.tif
+outputs/maps/*overlay.png
