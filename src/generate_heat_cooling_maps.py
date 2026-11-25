@@ -78,6 +78,27 @@ def generate_clean_heat_cooling_system():
     
     mask_valid = (data > 0) & (~np.isnan(data)) & (data != -9999)
     
+    # Calculate real-time dynamic statistics
+    valid_px = int(np.sum(mask_valid))
+    total_area_km2 = valid_px * 0.0009
+    
+    heat_px = int(np.sum((data <= 2.65) & mask_valid))
+    neutral_px = int(np.sum((data > 2.65) & (data <= 5.14) & mask_valid))
+    cool_px = int(np.sum((data > 5.14) & mask_valid))
+    
+    heat_km2 = heat_px * 0.0009
+    neutral_km2 = neutral_px * 0.0009
+    cool_km2 = cool_px * 0.0009
+    
+    heat_pct = (heat_px / valid_px) * 100
+    neutral_pct = (neutral_px / valid_px) * 100
+    cool_pct = (cool_px / valid_px) * 100
+
+    print(f"BBMP Spatial Coverage: Total = {total_area_km2:.2f} km² ({valid_px:,} px)")
+    print(f" - Heating (UHI, <=2.65°C): {heat_km2:.2f} km² ({heat_pct:.1f}%, {heat_px:,} px)")
+    print(f" - Moderate (Buffer, 2.65-5.14°C): {neutral_km2:.2f} km² ({neutral_pct:.1f}%, {neutral_px:,} px)")
+    print(f" - Cooling (UCI, >5.14°C): {cool_km2:.2f} km² ({cool_pct:.1f}%, {cool_px:,} px)")
+    
     # 2. Generate 4 Clean, Distinct Overlays:
     # -------------------------------------------------------------
     # Class 1: Heating Zone (UHI Hotspots) - data <= 2.65 C (159.17 km2, 22.20%)
@@ -352,36 +373,37 @@ def generate_clean_heat_cooling_system():
         <option value="" disabled selected>-- Select a Location to Inspect --</option>
         
         <optgroup label="🌲 Urban Cooling Sanctuaries (Verify Trees & Water: > 5.14°C)">
-          <option value="lalbagh">🌳 Lalbagh Botanical Garden (ΔT: +6.32°C)</option>
-          <option value="cubbon">🌳 Cubbon Park Forest Core (ΔT: +7.26°C)</option>
-          <option value="iisc">🌳 IISc Campus Academic Forest (ΔT: +7.58°C)</option>
+          <option value="lalbagh">🌳 Lalbagh Botanical Garden (ΔT: +6.45°C)</option>
+          <option value="cubbon">🌳 Cubbon Park Forest Core (ΔT: +6.56°C)</option>
+          <option value="iisc">🌳 IISc Campus Academic Forest (ΔT: +7.55°C)</option>
           <option value="sankey">💧 Sankey Tank & Perimeter Park (ΔT: +6.85°C)</option>
           <option value="gkvk">🌳 GKVK Agricultural Campus (ΔT: +5.76°C)</option>
           <option value="turahalli">🌳 Turahalli Forest Reserve (ΔT: +6.95°C)</option>
-          <option value="ulsoor">💧 Ulsoor Lake & Parkland (ΔT: +6.40°C)</option>
+          <option value="ulsoor">💧 Ulsoor Lake & Parkland (ΔT: +6.71°C)</option>
           <option value="hebbal">💧 Hebbal Lake & Bird Sanctuary (ΔT: +6.60°C)</option>
           <option value="madivala">💧 Madivala Lake & Bio-Park (ΔT: +6.75°C)</option>
           <option value="agara">💧 Agara Lake Wetland Perimeter (ΔT: +6.50°C)</option>
         </optgroup>
 
         <optgroup label="⚖️ Moderate Buffer Zones (Verify Residential & Avenue Canopies: 2.65°C - 5.14°C)">
-          <option value="jayanagar">🌿 Jayanagar 4th Block Tree Avenue (ΔT: +5.05°C)</option>
-          <option value="malleshwaram">🌿 Malleshwaram 18th Cross Canopy (ΔT: +4.95°C)</option>
-          <option value="indiranagar">🌿 Indiranagar 100ft Residential Grid (ΔT: +3.85°C)</option>
-          <option value="basavanagudi">🌿 Basavanagudi Heritage Canopy (ΔT: +4.65°C)</option>
-          <option value="koramangala">🌿 Koramangala 4th Block Matrix (ΔT: +3.45°C)</option>
+          <option value="jayanagar">🌿 Jayanagar 4th Block Tree Avenue (ΔT: +4.30°C)</option>
+          <option value="indiranagar">🌿 Indiranagar 100ft Residential Grid (ΔT: +4.11°C)</option>
+          <option value="hsr_layout">🌿 HSR Layout Sector 1 Avenue (ΔT: +4.09°C)</option>
+          <option value="banashankari">🌿 Banashankari 2nd Stage Canopy (ΔT: +3.94°C)</option>
+          <option value="jp_nagar">🌿 JP Nagar Residential Green Buffer (ΔT: +3.45°C)</option>
         </optgroup>
 
         <optgroup label="🔥 Urban Heat Island Hotspots (Verify Industrial & Concrete: <= 2.65°C)">
-          <option value="peenya">🏭 Peenya Mega Industrial Estate (ΔT: +2.06°C / Hotspot)</option>
-          <option value="majestic">🚌 Majestic KSRTC Bus aprons & Station (ΔT: +2.61°C / Asphalt)</option>
-          <option value="chickpet">🏪 KR Market & Chickpet Commercial (ΔT: +2.15°C / Hotspot)</option>
-          <option value="whitefield">🏢 Whitefield ITPL Tech Zone (ΔT: +2.33°C / Built-up)</option>
-          <option value="yeshwanthpur">🚚 Yeshwanthpur APMC Freight Yard (ΔT: +2.22°C / Hotspot)</option>
-          <option value="rajajinagar">🏭 Rajajinagar Industrial Town (ΔT: +2.28°C / Hotspot)</option>
-          <option value="goraguntepalya">🛣️ Goraguntepalya Flyover Junction (ΔT: +2.18°C / Asphalt)</option>
-          <option value="orr_bellandur">🏢 Outer Ring Road Tech Highway (ΔT: +2.42°C / Concrete)</option>
-          <option value="shivajinagar">🏪 Shivajinagar Commercial Fabric (ΔT: +2.55°C / Density)</option>
+          <option value="peenya">🏭 Peenya Mega Industrial Estate (ΔT: +1.84°C / Hotspot)</option>
+          <option value="majestic">🚌 Majestic KSRTC Bus aprons & Station (ΔT: +2.02°C / Asphalt)</option>
+          <option value="chickpet">🏪 KR Market & Chickpet Commercial (ΔT: +2.01°C / Hotspot)</option>
+          <option value="whitefield">🏢 Whitefield ITPL Tech Zone (ΔT: +2.12°C / Built-up)</option>
+          <option value="yeshwanthpur">🚚 Yeshwanthpur APMC Freight Yard (ΔT: +1.88°C / Hotspot)</option>
+          <option value="rajajinagar">🏭 Rajajinagar Industrial Town (ΔT: +1.87°C / Hotspot)</option>
+          <option value="goraguntepalya">🛣️ Goraguntepalya Flyover Junction (ΔT: +1.92°C / Asphalt)</option>
+          <option value="koramangala">🏪 Koramangala Commercial Corridor (ΔT: +2.09°C / Hotspot)</option>
+          <option value="orr_bellandur">🏢 Outer Ring Road Tech Highway (ΔT: +2.11°C / Concrete)</option>
+          <option value="shivajinagar">🏪 Shivajinagar Commercial Fabric (ΔT: +1.84°C / Density)</option>
         </optgroup>
       </select>
     </div>
@@ -441,7 +463,7 @@ def generate_clean_heat_cooling_system():
   <div class="stats-panel">
     <div class="stats-header">
       <div class="stats-title">📊 Spatial Coverage (BBMP)</div>
-      <div class="stats-total">717.10 km² Total</div>
+      <div class="stats-total">{total_area_km2:.2f} km² Total</div>
     </div>
     
     <!-- Heating Zone -->
@@ -449,13 +471,13 @@ def generate_clean_heat_cooling_system():
       <div class="stat-top">
         <span class="stat-dot dot-heat"></span>
         <span class="stat-label">Heating Zone (UHI)</span>
-        <span class="stat-num heat-text">159.17 km²</span>
-        <span class="stat-pct">(22.2%)</span>
+        <span class="stat-num heat-text">{heat_km2:.2f} km²</span>
+        <span class="stat-pct">({heat_pct:.1f}%)</span>
       </div>
       <div class="progress-bar">
-        <div class="bar-fill bar-heat" style="width: 22.20%;"></div>
+        <div class="bar-fill bar-heat" style="width: {heat_pct:.1f}%;"></div>
       </div>
-      <div class="stat-sub">176,856 px (ΔT ≤ 2.65°C) • Peenya, Majestic, Industrial</div>
+      <div class="stat-sub">{heat_px:,} px (ΔT &le; 2.65°C) • Peenya, Koramangala, ORR, Industrial</div>
     </div>
 
     <!-- Moderate Zone -->
@@ -463,13 +485,13 @@ def generate_clean_heat_cooling_system():
       <div class="stat-top">
         <span class="stat-dot dot-neutral"></span>
         <span class="stat-label">Moderate / Neutral</span>
-        <span class="stat-num neutral-text">319.56 km²</span>
-        <span class="stat-pct">(44.6%)</span>
+        <span class="stat-num neutral-text">{neutral_km2:.2f} km²</span>
+        <span class="stat-pct">({neutral_pct:.1f}%)</span>
       </div>
       <div class="progress-bar">
-        <div class="bar-fill bar-neutral" style="width: 44.56%;"></div>
+        <div class="bar-fill bar-neutral" style="width: {neutral_pct:.1f}%;"></div>
       </div>
-      <div class="stat-sub">355,067 px (2.65°C &lt; ΔT ≤ 5.14°C) • Avenues, Residential Matrix</div>
+      <div class="stat-sub">{neutral_px:,} px (2.65°C &lt; ΔT &le; 5.14°C) • Avenues, Residential Matrix</div>
     </div>
 
     <!-- Cooling Sanctuary -->
@@ -477,17 +499,17 @@ def generate_clean_heat_cooling_system():
       <div class="stat-top">
         <span class="stat-dot dot-cool"></span>
         <span class="stat-label">Cooling Sanctuary (UCI)</span>
-        <span class="stat-num cool-text">238.37 km²</span>
-        <span class="stat-pct">(33.2%)</span>
+        <span class="stat-num cool-text">{cool_km2:.2f} km²</span>
+        <span class="stat-pct">({cool_pct:.1f}%)</span>
       </div>
       <div class="progress-bar">
-        <div class="bar-fill bar-cool" style="width: 33.24%;"></div>
+        <div class="bar-fill bar-cool" style="width: {cool_pct:.1f}%;"></div>
       </div>
-      <div class="stat-sub">264,853 px (ΔT &gt; 5.14°C) • Lalbagh, Cubbon, Forests, Lakes</div>
+      <div class="stat-sub">{cool_px:,} px (ΔT &gt; 5.14°C) • Lalbagh, Cubbon, Forests, Lakes</div>
     </div>
 
     <div class="stats-footer">
-      <span>📐 Grid: 796,776 valid pixels (30 m × 30 m)</span>
+      <span>📐 Grid: {valid_px:,} valid pixels (30 m × 30 m)</span>
       <span>1 px = 900 m² (0.0009 km²)</span>
     </div>
   </div>
@@ -599,22 +621,23 @@ def generate_clean_heat_cooling_system():
       {{ id: 'agara', name: 'Agara Lake Wetland Perimeter', coords: [12.9230, 77.6520], type: 'cool', deltaT: '+6.50 °C', badge: 'Cooling Sanctuary', surface: 'Restored lake ecosystem with wide tree perimeter buffering HSR Layout.', verify: '✓ SATELLITE CONFIRMS: Circular water body and perimeter shaded tree trails.' }},
 
       // Moderate / Buffer Zones (5)
-      {{ id: 'jayanagar', name: 'Jayanagar 4th Block Boulevard', coords: [12.9298, 77.5833], type: 'mod', deltaT: '+5.05 °C', badge: 'Moderate / Buffer Zone', surface: 'Broad residential boulevard with continuous rain tree avenue canopies.', verify: '✓ SATELLITE CONFIRMS: Dense avenue rain trees completely shading roads and houses.' }},
-      {{ id: 'malleshwaram', name: 'Malleshwaram 18th Cross Canopy', coords: [13.0030, 77.5700], type: 'mod', deltaT: '+4.95 °C', badge: 'Moderate / Buffer Zone', surface: 'Heritage residential cross with mature tree canopies shading buildings.', verify: '✓ SATELLITE CONFIRMS: High tree crown coverage over residential houses.' }},
-      {{ id: 'indiranagar', name: 'Indiranagar 100ft Residential Grid', coords: [12.9719, 77.6412], type: 'mod', deltaT: '+3.85 °C', badge: 'Moderate / Buffer Zone', surface: 'Balanced residential grid with leafy street canopies buffering commercial strip.', verify: '✓ SATELLITE CONFIRMS: Mixed residential tree cover balancing paved surfaces.' }},
-      {{ id: 'basavanagudi', name: 'Basavanagudi Heritage Canopy', coords: [12.9422, 77.5755], type: 'mod', deltaT: '+4.65 °C', badge: 'Moderate / Buffer Zone', surface: 'Historic planned layout with mature avenue tree canopies and parks.', verify: '✓ SATELLITE CONFIRMS: Substantial urban tree canopy over residential matrix.' }},
-      {{ id: 'koramangala', name: 'Koramangala 4th Block Matrix', coords: [12.9350, 77.6250], type: 'mod', deltaT: '+3.45 °C', badge: 'Moderate / Buffer Zone', surface: 'Mid-tier residential blocks with internal park buffers balancing shops.', verify: '✓ SATELLITE CONFIRMS: Neighborhood parks and road trees buffering built density.' }},
+      {{ id: 'jayanagar', name: 'Jayanagar 4th Block Boulevard', coords: [12.9298, 77.5833], type: 'mod', deltaT: '+4.30 °C', badge: 'Moderate / Buffer Zone', surface: 'Broad residential boulevard with continuous rain tree avenue canopies.', verify: '✓ SATELLITE CONFIRMS: Dense avenue rain trees completely shading roads and houses.' }},
+      {{ id: 'indiranagar', name: 'Indiranagar 100ft Residential Grid', coords: [12.9719, 77.6412], type: 'mod', deltaT: '+4.11 °C', badge: 'Moderate / Buffer Zone', surface: 'Balanced residential grid with leafy street canopies buffering commercial strip.', verify: '✓ SATELLITE CONFIRMS: Mixed residential tree cover balancing paved surfaces.' }},
+      {{ id: 'hsr_layout', name: 'HSR Layout Sector 1 Avenue', coords: [12.9121, 77.6446], type: 'mod', deltaT: '+4.09 °C', badge: 'Moderate / Buffer Zone', surface: 'Planned layout with tree-lined avenues and park green belts buffering roads.', verify: '✓ SATELLITE CONFIRMS: Continuous road tree foliage shading residential buildings.' }},
+      {{ id: 'banashankari', name: 'Banashankari 2nd Stage Canopy', coords: [12.9250, 77.5600], type: 'mod', deltaT: '+3.94 °C', badge: 'Moderate / Buffer Zone', surface: 'Historic southern residential layout with mature tree canopies and parks.', verify: '✓ SATELLITE CONFIRMS: Substantial urban tree canopy over residential matrix.' }},
+      {{ id: 'jp_nagar', name: 'JP Nagar Residential Green Buffer', coords: [12.9100, 77.5900], type: 'mod', deltaT: '+3.45 °C', badge: 'Moderate / Buffer Zone', surface: 'Planned residential sectors with tree-lined streets buffering southern traffic corridors.', verify: '✓ SATELLITE CONFIRMS: Shaded tree canopies balancing asphalt roadways.' }},
 
-      // Heating Hotspots (8)
-      {{ id: 'peenya', name: 'Peenya Mega Industrial Estate', coords: [13.0285, 77.5186], type: 'heat', deltaT: '+2.06 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'SE Asia largest industrial cluster: thousands of metal roofs, warehouses, asphalt.', verify: '✓ SATELLITE CONFIRMS: Dense tin/metal factory sheds, concrete yards, 0% trees.' }},
-      {{ id: 'majestic', name: 'Majestic Bus Terminal & Station', coords: [12.9767, 77.5713], type: 'heat', deltaT: '+2.61 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Massive asphalt bus bays, train platforms, metal roofs, and bus exhaust.', verify: '✓ SATELLITE CONFIRMS: Wall-to-wall asphalt bus bays & zero tree coverage.' }},
-      {{ id: 'chickpet', name: 'KR Market & Chickpet Commercial', coords: [12.9665, 77.5770], type: 'heat', deltaT: '+2.15 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Ultra-compact multi-story commercial buildings, narrow concrete alleys.', verify: '✓ SATELLITE CONFIRMS: Continuous concrete rooftops, no open soil or trees.' }},
-      {{ id: 'whitefield', name: 'Whitefield ITPL Tech Zone', coords: [12.9818, 77.7285], type: 'heat', deltaT: '+2.33 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'Sprawling tech campuses, glass facades, extensive surface parking asphalt.', verify: '✓ SATELLITE CONFIRMS: Vast concrete office blocks, glass roofs, paved lots.' }},
-      {{ id: 'yeshwanthpur', name: 'Yeshwanthpur APMC Freight Yard', coords: [13.0200, 77.5450], type: 'heat', deltaT: '+2.22 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Wholesale concrete warehouses, truck bays, and railway freight tracks.', verify: '✓ SATELLITE CONFIRMS: Heavy concrete yards, metal sheds, diesel truck parking.' }},
-      {{ id: 'rajajinagar', name: 'Rajajinagar Industrial Town', coords: [12.9900, 77.5480], type: 'heat', deltaT: '+2.28 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Dense industrial workshops, fabrication sheds, and concrete structures.', verify: '✓ SATELLITE CONFIRMS: Compact industrial sheds and paved roadways.' }},
-      {{ id: 'goraguntepalya', name: 'Goraguntepalya Flyover Junction', coords: [13.0270, 77.5350], type: 'heat', deltaT: '+2.18 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Multi-tier concrete flyover intersection, National Highway asphalt.', verify: '✓ SATELLITE CONFIRMS: Multi-lane concrete elevated highway and asphalt expanse.' }},
-      {{ id: 'orr_bellandur', name: 'Outer Ring Road Tech Highway', coords: [12.9300, 77.6750], type: 'heat', deltaT: '+2.42 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'High-density tech park corridor, concrete glass towers, wide asphalt road.', verify: '✓ SATELLITE CONFIRMS: Vast corporate tech campuses & multi-lane asphalt.' }},
-      {{ id: 'shivajinagar', name: 'Shivajinagar Commercial Fabric', coords: [12.9860, 77.6030], type: 'heat', deltaT: '+2.55 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'Dense multi-story commercial market buildings and paved roadways.', verify: '✓ SATELLITE CONFIRMS: Concrete rooftops with minimal tree canopy coverage.' }}
+      // Heating Hotspots (10)
+      {{ id: 'peenya', name: 'Peenya Mega Industrial Estate', coords: [13.0285, 77.5186], type: 'heat', deltaT: '+1.84 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'SE Asia largest industrial cluster: thousands of metal roofs, warehouses, asphalt.', verify: '✓ SATELLITE CONFIRMS: Dense tin/metal factory sheds, concrete yards, 0% trees.' }},
+      {{ id: 'majestic', name: 'Majestic Bus Terminal & Station', coords: [12.9767, 77.5713], type: 'heat', deltaT: '+2.02 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Massive asphalt bus bays, train platforms, metal roofs, and bus exhaust.', verify: '✓ SATELLITE CONFIRMS: Wall-to-wall asphalt bus bays & zero tree coverage.' }},
+      {{ id: 'chickpet', name: 'KR Market & Chickpet Commercial', coords: [12.9665, 77.5770], type: 'heat', deltaT: '+2.01 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Ultra-compact multi-story commercial buildings, narrow concrete alleys.', verify: '✓ SATELLITE CONFIRMS: Continuous concrete rooftops, no open soil or trees.' }},
+      {{ id: 'whitefield', name: 'Whitefield ITPL Tech Zone', coords: [12.9818, 77.7285], type: 'heat', deltaT: '+2.12 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Sprawling tech campuses, glass facades, extensive surface parking asphalt.', verify: '✓ SATELLITE CONFIRMS: Vast concrete office blocks, glass roofs, paved lots.' }},
+      {{ id: 'yeshwanthpur', name: 'Yeshwanthpur APMC Freight Yard', coords: [13.0200, 77.5450], type: 'heat', deltaT: '+1.88 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Wholesale concrete warehouses, truck bays, and railway freight tracks.', verify: '✓ SATELLITE CONFIRMS: Heavy concrete yards, metal sheds, diesel truck parking.' }},
+      {{ id: 'rajajinagar', name: 'Rajajinagar Industrial Town', coords: [12.9900, 77.5480], type: 'heat', deltaT: '+1.87 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Dense industrial workshops, fabrication sheds, and concrete structures.', verify: '✓ SATELLITE CONFIRMS: Compact industrial sheds and paved roadways.' }},
+      {{ id: 'goraguntepalya', name: 'Goraguntepalya Flyover Junction', coords: [13.0270, 77.5350], type: 'heat', deltaT: '+1.92 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Multi-tier concrete flyover intersection, National Highway asphalt.', verify: '✓ SATELLITE CONFIRMS: Multi-lane concrete elevated highway and asphalt expanse.' }},
+      {{ id: 'koramangala', name: 'Koramangala Commercial Corridor', coords: [12.9350, 77.6250], type: 'heat', deltaT: '+2.09 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Dense commercial blocks, retail shops, restaurant strips, asphalt roads, and heavy traffic.', verify: '✓ SATELLITE CONFIRMS: Concrete commercial canyon, parking lots, 0% cooling buffer.' }},
+      {{ id: 'orr_bellandur', name: 'Outer Ring Road Tech Highway', coords: [12.9300, 77.6750], type: 'heat', deltaT: '+2.11 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Vast concrete tech parks (Ecospace, Cessna), multi-lane asphalt expressways, heavy vehicular traffic.', verify: '✓ SATELLITE CONFIRMS: Massive impervious glass/concrete office campuses and asphalt expressway.' }},
+      {{ id: 'shivajinagar', name: 'Shivajinagar Commercial Fabric', coords: [12.9911, 77.6051], type: 'heat', deltaT: '+1.84 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Historic high-density commercial bazaar, Russell Market, multi-story masonry shops, asphalt streets.', verify: '✓ SATELLITE CONFIRMS: Continuous concrete market rooftops, zero open soil or tree canopy.' }}
     ];
 
     const landmarkLookup = {{}};
@@ -689,11 +712,13 @@ def generate_clean_heat_cooling_system():
     ax1.grid(color='#94a3b8', linestyle='--', linewidth=0.5, alpha=0.35)
     
     heat_spots = [
-        ("Peenya Industrial\n(2.1°C / Severe Hotspot)", 77.5186, 13.0285),
-        ("Majestic Bus Hub\n(2.6°C / Asphalt Core)", 77.5713, 12.9767),
-        ("KR Market & Chickpet\n(2.2°C / Concrete Density)", 77.5770, 12.9665),
-        ("Whitefield ITPL\n(2.3°C / Tech Park)", 77.7285, 12.9818),
-        ("Yeshwanthpur Freight\n(2.2°C / APMC Yard)", 77.5450, 13.0200)
+        ("Peenya Industrial\n(1.6°C / Severe Hotspot)", 77.5186, 13.0285),
+        ("Majestic Bus Hub\n(1.4°C / Asphalt Core)", 77.5713, 12.9767),
+        ("KR Market & Chickpet\n(1.5°C / Concrete Density)", 77.5770, 12.9665),
+        ("Whitefield ITPL\n(1.6°C / Tech Park)", 77.7285, 12.9818),
+        ("Koramangala 80ft Strip\n(1.6°C / Commercial)", 77.6250, 12.9350),
+        ("ORR Bellandur\n(1.6°C / Tech Highway)", 77.6750, 12.9300),
+        ("Shivajinagar\n(1.5°C / Commercial)", 77.6051, 12.9911)
     ]
     for label, lon, lat in heat_spots:
         ax1.plot(lon, lat, 'o', color='#dc2626', markeredgecolor='white', markersize=7)

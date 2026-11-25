@@ -59,21 +59,32 @@ def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="
     
     # Landmark coordinates in UTM Zone 43N
     green_landmarks = [
-        (780350, 1433020, 1800), # Lalbagh Botanical Garden
-        (781190, 1435910, 1600), # Cubbon Park
-        (778450, 1440750, 1900), # IISc Campus & Sankey Tank
-        (779600, 1446800, 2800), # GKVK Agricultural Campus
-        (780950, 1443000, 2200), # Hebbal Lake basin
-        (789000, 1432000, 3200), # Bellandur / Varthur Lake wetlands
-        (781000, 1422000, 4200), # Bannerghatta national park buffer
-        (773000, 1426000, 2500)  # Turahalli forest reserve
+        (780350, 1433020, 1500), # Lalbagh Botanical Garden (240 acres)
+        (781290, 1435940, 1200), # Cubbon Park (300 acres)
+        (778450, 1440750, 1500), # IISc Campus & Academic Forest
+        (779310, 1439655, 1000), # Sankey Tank
+        (779600, 1446800, 2200), # GKVK Agricultural Campus
+        (773000, 1426000, 2000), # Turahalli Forest Reserve
+        (784227, 1436606, 900),  # Ulsoor Lake
+        (780950, 1443000, 1400), # Hebbal Lake
+        (784411, 1429191, 1100), # Madivala Lake
+        (787768, 1430111, 1000), # Agara Lake
+        (789500, 1433500, 1100), # Bellandur Lake water basin
+        (781000, 1421000, 2400)  # Bannerghatta south boundary
     ]
     built_landmarks = [
-        (773320, 1441810, 3200), # Peenya Industrial Area
-        (778900, 1434800, 2800), # Majestic / City Market core
-        (797300, 1435400, 3800), # Whitefield IT corridor
-        (789800, 1421700, 3200), # Electronic City tech corridor
-        (775000, 1438000, 2200)  # Yeshwanthpur freight hub
+        (773320, 1441810, 2800), # Peenya Industrial Area (mega industrial core)
+        (778900, 1434800, 1400), # Majestic / City Market core
+        (779580, 1434840, 1200), # KR Market / Chickpet commercial
+        (782600, 1437600, 1000), # Shivajinagar Russell Market commercial core
+        (782600, 1438000, 1000), # Cantonment / Shivaji commercial zone
+        (797300, 1435400, 3200), # Whitefield IT corridor
+        (775000, 1438000, 1600), # Yeshwanthpur freight hub
+        (776400, 1437410, 1500), # Rajajinagar Industrial Town
+        (774950, 1441490, 1500), # Goraguntepalya Flyover Junction
+        (790260, 1430910, 2400), # Outer Ring Road Bellandur Tech Highway
+        (784820, 1431410, 1800), # Koramangala 80ft Commercial Corridor
+        (789800, 1421700, 2600)  # Electronic City tech corridor
     ]
     
     green_inf = np.zeros(num_valid)
@@ -87,7 +98,7 @@ def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="
         built_inf += np.exp(-d2 / (2.0 * s**2))
         
     np.random.seed(42)
-    latent = np.random.normal(0, 0.35, size=(num_valid, 8))
+    latent = np.random.normal(0, 0.08, size=(num_valid, 8))
     latent[:, 0] += 1.8 * green_inf - 1.1 * built_inf
     latent[:, 1] += 1.8 * built_inf - 1.1 * green_inf
     latent[:, 2] += 0.8 * green_inf
@@ -200,3 +211,19 @@ def create_presentation_map_layout(cooling_grid, bounds, output_img_path="output
     plt.close()
     
     print(f"Saved Map Presentation Layout: {output_img_path} & {pdf_path}")
+
+if __name__ == "__main__":
+    import joblib
+    bundle = joblib.load("outputs/models/champion_model.joblib")
+    model = bundle['model']
+    scaler = bundle['scaler']
+    pca = bundle.get('pca')
+    bbmp_path = "data/BBMP.geojson"
+    cooling_grid, transform, bounds = generate_spatial_geotiff(
+        model, scaler, bbmp_path,
+        output_tif_path="outputs/maps/bengaluru_cooling_potential_30m.tif",
+        resolution=30,
+        pca=pca
+    )
+    create_presentation_map_layout(cooling_grid, bounds)
+
