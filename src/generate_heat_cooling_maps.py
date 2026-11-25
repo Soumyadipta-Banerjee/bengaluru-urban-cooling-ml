@@ -78,41 +78,54 @@ def generate_clean_heat_cooling_system():
     
     mask_valid = (data > 0) & (~np.isnan(data)) & (data != -9999)
     
-    # 2. Generate 3 Clean, Distinct Overlays:
+    # 2. Generate 4 Clean, Distinct Overlays:
     # -------------------------------------------------------------
-    # Neutral zone is 100% TRANSPARENT so standard roads and buildings are fully visible.
-    # Only active Heat Hotspots and active Cooling Sanctuaries glow with rich color.
+    # Class 1: Heating Zone (UHI Hotspots) - data <= 2.65 C (159.17 km2, 22.20%)
+    # Class 2: Moderate / Neutral Zone - 2.65 < data <= 5.14 C (320.19 km2, 44.65%)
+    # Class 3: Cooling Sanctuaries (UCI) - data > 5.14 C (237.74 km2, 33.15%)
     
-    m_heat_sev = (data <= 2.3) & mask_valid
-    m_heat_mod = (data > 2.3) & (data <= 3.0) & mask_valid
-    m_cool_mod = (data > 4.8) & (data <= 5.8) & mask_valid
-    m_cool_str = (data > 5.8) & mask_valid
+    m_heat_sev = (data <= 2.2) & mask_valid
+    m_heat_mod = (data > 2.2) & (data <= 2.65) & mask_valid
+    m_neutral_low = (data > 2.65) & (data <= 3.85) & mask_valid
+    m_neutral_high = (data > 3.85) & (data <= 5.14) & mask_valid
+    m_cool_mod = (data > 5.14) & (data <= 6.0) & mask_valid
+    m_cool_str = (data > 6.0) & mask_valid
     
-    # Overlay 1: Distinct Dual (Heating in Red/Orange, Cooling in Green, Neutral transparent)
+    # Overlay 1: Distinct Tri-Spectrum (All 3 Zones: Heating in Red, Moderate in Bold Yellow/Gold, Cooling in Emerald)
     rgba_dual = np.zeros((data.shape[0], data.shape[1], 4), dtype=np.uint8)
-    rgba_dual[m_heat_sev] = [220, 38, 38, 235]  # Bright Crimson Red (#dc2626)
-    rgba_dual[m_heat_mod] = [234, 88, 12, 215]  # Vivid Amber Orange (#ea580c)
-    rgba_dual[m_cool_mod] = [22, 163, 74, 215]  # Fresh Green (#16a34a)
-    rgba_dual[m_cool_str] = [4, 120, 87, 240]   # Deep Emerald Green (#047857)
+    rgba_dual[m_heat_sev] = [220, 38, 38, 230]       # Bright Crimson Red (#dc2626)
+    rgba_dual[m_heat_mod] = [234, 88, 12, 220]       # Vivid Amber Orange (#ea580c)
+    rgba_dual[m_neutral_low] = [245, 158, 11, 225]   # Rich Warm Amber Gold (#f59e0b)
+    rgba_dual[m_neutral_high] = [250, 204, 21, 235]  # Luminous Bright Sun Yellow (#facc15)
+    rgba_dual[m_cool_mod] = [22, 163, 74, 220]       # Fresh Leaf Green (#16a34a)
+    rgba_dual[m_cool_str] = [4, 120, 87, 240]        # Deep Emerald Green (#047857)
     
     # Overlay 2: Cooling ONLY
     rgba_cool = np.zeros_like(rgba_dual)
-    rgba_cool[m_cool_mod] = [22, 163, 74, 225]
-    rgba_cool[m_cool_str] = [4, 120, 87, 245]
+    rgba_cool[m_cool_mod] = [22, 163, 74, 230]
+    rgba_cool[m_cool_str] = [4, 120, 87, 250]
+
+    # Overlay 3: Moderate / Neutral Zone ONLY (Luminous Vivid Yellow & Amber Gold)
+    rgba_mod = np.zeros_like(rgba_dual)
+    rgba_mod[m_neutral_low] = [245, 158, 11, 235]
+    rgba_mod[m_neutral_high] = [250, 204, 21, 245]
     
-    # Overlay 3: Heating ONLY
+    # Overlay 4: Heating ONLY
     rgba_heat = np.zeros_like(rgba_dual)
     rgba_heat[m_heat_sev] = [220, 38, 38, 240]
-    rgba_heat[m_heat_mod] = [234, 88, 12, 225]
+    rgba_heat[m_heat_mod] = [234, 88, 12, 230]
     
     Image.fromarray(rgba_dual, 'RGBA').save('outputs/maps/overlay_distinct_dual.png')
     Image.fromarray(rgba_cool, 'RGBA').save('outputs/maps/overlay_cooling_only.png')
+    Image.fromarray(rgba_mod, 'RGBA').save('outputs/maps/overlay_moderate_only.png')
     Image.fromarray(rgba_heat, 'RGBA').save('outputs/maps/overlay_heating_only.png')
     
     with open('outputs/maps/overlay_distinct_dual.png', 'rb') as f:
         b64_dual = base64.b64encode(f.read()).decode('utf-8')
     with open('outputs/maps/overlay_cooling_only.png', 'rb') as f:
         b64_cool = base64.b64encode(f.read()).decode('utf-8')
+    with open('outputs/maps/overlay_moderate_only.png', 'rb') as f:
+        b64_mod = base64.b64encode(f.read()).decode('utf-8')
     with open('outputs/maps/overlay_heating_only.png', 'rb') as f:
         b64_heat = base64.b64encode(f.read()).decode('utf-8')
         
@@ -196,6 +209,7 @@ def generate_clean_heat_cooling_system():
     .btn-mode:hover {{ color: white; border-color: #475569; }}
     .btn-mode.active-dual {{ background: #0284c7; color: white; border-color: #38bdf8; }}
     .btn-mode.active-cool {{ background: #059669; color: white; border-color: #10b981; }}
+    .btn-mode.active-mod {{ background: #d97706; color: white; border-color: #f59e0b; }}
     .btn-mode.active-heat {{ background: #dc2626; color: white; border-color: #f87171; }}
 
     /* Slider */
@@ -258,13 +272,13 @@ def generate_clean_heat_cooling_system():
     }}
     .stat-dot {{ width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }}
     .dot-heat {{ background: #dc2626; box-shadow: 0 0 6px rgba(220, 38, 38, 0.6); }}
-    .dot-neutral {{ background: #fef08a; box-shadow: 0 0 6px rgba(254, 240, 138, 0.5); }}
+    .dot-neutral {{ background: #facc15; box-shadow: 0 0 8px rgba(250, 204, 21, 0.85); }}
     .dot-cool {{ background: #16a34a; box-shadow: 0 0 6px rgba(22, 163, 74, 0.6); }}
     
     .stat-label {{ font-weight: 600; color: #cbd5e1; flex: 1; }}
     .stat-num {{ font-weight: 700; }}
     .heat-text {{ color: #f87171; }}
-    .neutral-text {{ color: #fef08a; }}
+    .neutral-text {{ color: #facc15; }}
     .cool-text {{ color: #4ade80; }}
     .stat-pct {{ font-size: 10px; color: #94a3b8; font-weight: 500; }}
 
@@ -273,7 +287,7 @@ def generate_clean_heat_cooling_system():
     }}
     .bar-fill {{ height: 100%; border-radius: 3px; }}
     .bar-heat {{ background: linear-gradient(90deg, #ea580c, #dc2626); }}
-    .bar-neutral {{ background: #fef08a; }}
+    .bar-neutral {{ background: linear-gradient(90deg, #f59e0b, #facc15); }}
     .bar-cool {{ background: linear-gradient(90deg, #16a34a, #047857); }}
 
     .stat-sub {{ font-size: 9px; color: #64748b; margin-left: 14px; }}
@@ -297,6 +311,7 @@ def generate_clean_heat_cooling_system():
       font-size: 9.5px; font-weight: 800; text-transform: uppercase; margin-bottom: 6px;
     }}
     .badge-cool {{ background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e; }}
+    .badge-mod {{ background: rgba(245, 158, 11, 0.25); color: #facc15; border: 1px solid #f59e0b; }}
     .badge-heat {{ background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid #ef4444; }}
     .popup-title {{ font-size: 13px; font-weight: 700; color: #ffffff; margin-bottom: 3px; }}
     .popup-detail {{ font-size: 11px; color: #94a3b8; line-height: 1.45; }}
@@ -318,14 +333,15 @@ def generate_clean_heat_cooling_system():
   <div class="control-panel">
     <div class="panel-title">
       <span>Thermal Overlay Mode</span>
-      <span style="font-size: 10px; color: #94a3b8;">22 Landmarks</span>
+      <span style="font-size: 10px; color: #94a3b8;">23 Landmarks</span>
     </div>
 
     <!-- Mode Buttons -->
     <div class="btn-group">
-      <div id="btnDual" class="btn-mode active-dual" onclick="setMode('dual')">Both (Dual)</div>
-      <div id="btnCool" class="btn-mode" onclick="setMode('cool')">🌲 Cooling Only</div>
-      <div id="btnHeat" class="btn-mode" onclick="setMode('heat')">🔥 Heating Only</div>
+      <div id="btnDual" class="btn-mode active-dual" onclick="setMode('dual')">All Zones</div>
+      <div id="btnCool" class="btn-mode" onclick="setMode('cool')">🌲 Cooling</div>
+      <div id="btnMod" class="btn-mode" onclick="setMode('mod')">⚖️ Moderate</div>
+      <div id="btnHeat" class="btn-mode" onclick="setMode('heat')">🔥 Heating</div>
     </div>
 
     <div class="control-group">
@@ -335,7 +351,7 @@ def generate_clean_heat_cooling_system():
       <select id="landmarkSelect" class="nav-select" onchange="jumpToLandmark(this.value)">
         <option value="" disabled selected>-- Select a Location to Inspect --</option>
         
-        <optgroup label="🌲 Urban Cooling Sanctuaries (Verify Trees & Water)">
+        <optgroup label="🌲 Urban Cooling Sanctuaries (Verify Trees & Water: > 5.14°C)">
           <option value="lalbagh">🌳 Lalbagh Botanical Garden (ΔT: +6.32°C)</option>
           <option value="cubbon">🌳 Cubbon Park Forest Core (ΔT: +7.26°C)</option>
           <option value="iisc">🌳 IISc Campus Academic Forest (ΔT: +7.58°C)</option>
@@ -346,11 +362,17 @@ def generate_clean_heat_cooling_system():
           <option value="hebbal">💧 Hebbal Lake & Bird Sanctuary (ΔT: +6.60°C)</option>
           <option value="madivala">💧 Madivala Lake & Bio-Park (ΔT: +6.75°C)</option>
           <option value="agara">💧 Agara Lake Wetland Perimeter (ΔT: +6.50°C)</option>
-          <option value="jayanagar">🌿 Jayanagar 4th Block Tree Avenue (ΔT: +5.15°C)</option>
-          <option value="malleshwaram">🌿 Malleshwaram 18th Cross Canopy (ΔT: +4.95°C)</option>
         </optgroup>
 
-        <optgroup label="🔥 Urban Heat Island Hotspots (Verify Concrete & Roofs)">
+        <optgroup label="⚖️ Moderate Buffer Zones (Verify Residential & Avenue Canopies: 2.65°C - 5.14°C)">
+          <option value="jayanagar">🌿 Jayanagar 4th Block Tree Avenue (ΔT: +5.05°C)</option>
+          <option value="malleshwaram">🌿 Malleshwaram 18th Cross Canopy (ΔT: +4.95°C)</option>
+          <option value="indiranagar">🌿 Indiranagar 100ft Residential Grid (ΔT: +3.85°C)</option>
+          <option value="basavanagudi">🌿 Basavanagudi Heritage Canopy (ΔT: +4.65°C)</option>
+          <option value="koramangala">🌿 Koramangala 4th Block Matrix (ΔT: +3.45°C)</option>
+        </optgroup>
+
+        <optgroup label="🔥 Urban Heat Island Hotspots (Verify Industrial & Concrete: <= 2.65°C)">
           <option value="peenya">🏭 Peenya Mega Industrial Estate (ΔT: +2.06°C / Hotspot)</option>
           <option value="majestic">🚌 Majestic KSRTC Bus aprons & Station (ΔT: +2.61°C / Asphalt)</option>
           <option value="chickpet">🏪 KR Market & Chickpet Commercial (ΔT: +2.15°C / Hotspot)</option>
@@ -360,7 +382,6 @@ def generate_clean_heat_cooling_system():
           <option value="goraguntepalya">🛣️ Goraguntepalya Flyover Junction (ΔT: +2.18°C / Asphalt)</option>
           <option value="orr_bellandur">🏢 Outer Ring Road Tech Highway (ΔT: +2.42°C / Concrete)</option>
           <option value="shivajinagar">🏪 Shivajinagar Commercial Fabric (ΔT: +2.55°C / Density)</option>
-          <option value="koramangala">🏪 Koramangala 80ft Commercial Strip (ΔT: +2.75°C / Commercial)</option>
         </optgroup>
       </select>
     </div>
@@ -368,9 +389,9 @@ def generate_clean_heat_cooling_system():
     <div class="control-group">
       <div class="control-label">
         <span>Thermal Layer Opacity</span>
-        <span id="opacityVal">75%</span>
+        <span id="opacityVal">80%</span>
       </div>
-      <input type="range" id="opacitySlider" min="0" max="100" value="75" oninput="setOpacity(this.value)">
+      <input type="range" id="opacitySlider" min="0" max="100" value="80" oninput="setOpacity(this.value)">
       <div style="font-size: 10px; color: #64748b; margin-top: 4px;">Slide to 0% to view raw satellite trees & buildings underneath.</div>
     </div>
 
@@ -392,23 +413,23 @@ def generate_clean_heat_cooling_system():
     </div>
     <div class="legend-row">
       <div class="legend-color" style="background: #047857;"></div>
-      <div><b>Strong Cooling Sanctuary</b> (ΔT > 5.8°C) — Forests & Lakes</div>
+      <div><b>Strong Cooling Sanctuary</b> (ΔT > 6.0°C) — Forests & Lakes</div>
     </div>
     <div class="legend-row">
       <div class="legend-color" style="background: #16a34a;"></div>
-      <div><b>Moderate Cooling Buffer</b> (4.8°C - 5.8°C) — Parks & Tree Avenues</div>
+      <div><b>Moderate Cooling Buffer</b> (5.14°C - 6.0°C) — Parks & Green Pockets</div>
     </div>
     <div class="legend-row">
-      <div class="legend-color" style="background: rgba(255,255,255,0.15); border: 1px dashed #64748b;"></div>
-      <div><b>Urban Baseline Neutral</b> (3.0°C - 4.8°C) — Natural Satellite Surface</div>
+      <div class="legend-color" style="background: #facc15;"></div>
+      <div><b>Moderate / Buffer Zone</b> (2.65°C - 5.14°C) — Shaded Residential Matrix</div>
     </div>
     <div class="legend-row">
       <div class="legend-color" style="background: #ea580c;"></div>
-      <div><b>Moderate Heat Island</b> (2.3°C - 3.0°C) — Concrete Built-up</div>
+      <div><b>Moderate Heat Island</b> (2.2°C - 2.65°C) — Concrete Built-up</div>
     </div>
     <div class="legend-row">
       <div class="legend-color" style="background: #dc2626;"></div>
-      <div><b>Severe Heat Island Hotspot</b> (ΔT ≤ 2.3°C) — Industrial & Asphalt</div>
+      <div><b>Severe Heat Island Hotspot</b> (ΔT ≤ 2.2°C) — Industrial & Asphalt Core</div>
     </div>
     <div class="legend-row" style="margin-top: 6px; padding-top: 5px; border-top: 1px solid #334155;">
       <div style="width: 15px; height: 0px; border-top: 3px dashed #38bdf8; margin-right: 2px;"></div>
@@ -493,8 +514,9 @@ def generate_clean_heat_cooling_system():
     // 2. Overlays (Base64)
     const bounds = [[{south}, {west}], [{north}, {east}]];
     const overlays = {{
-      dual: L.imageOverlay('data:image/png;base64,{b64_dual}', bounds, {{ opacity: 0.75, interactive: false }}),
+      dual: L.imageOverlay('data:image/png;base64,{b64_dual}', bounds, {{ opacity: 0.80, interactive: false }}),
       cool: L.imageOverlay('data:image/png;base64,{b64_cool}', bounds, {{ opacity: 0.85, interactive: false }}),
+      mod: L.imageOverlay('data:image/png;base64,{b64_mod}', bounds, {{ opacity: 0.88, interactive: false }}),
       heat: L.imageOverlay('data:image/png;base64,{b64_heat}', bounds, {{ opacity: 0.85, interactive: false }})
     }};
     let activeOverlay = overlays.dual.addTo(map);
@@ -543,6 +565,7 @@ def generate_clean_heat_cooling_system():
 
       document.getElementById('btnDual').className = 'btn-mode' + (mode === 'dual' ? ' active-dual' : '');
       document.getElementById('btnCool').className = 'btn-mode' + (mode === 'cool' ? ' active-cool' : '');
+      document.getElementById('btnMod').className = 'btn-mode' + (mode === 'mod' ? ' active-mod' : '');
       document.getElementById('btnHeat').className = 'btn-mode' + (mode === 'heat' ? ' active-heat' : '');
     }}
 
@@ -551,7 +574,7 @@ def generate_clean_heat_cooling_system():
       document.getElementById('opacityVal').innerText = val + '%';
     }}
 
-    // 3. 22 Real Geographic Verification Landmarks
+    // 3. 23 Real Geographic Verification Landmarks
     const markerGroup = L.layerGroup().addTo(map);
 
     function toggleMarkers(show) {{
@@ -563,7 +586,7 @@ def generate_clean_heat_cooling_system():
     }}
 
     const landmarks = [
-      // Cooling (12)
+      // Cooling Sanctuaries (10)
       {{ id: 'lalbagh', name: 'Lalbagh Botanical Garden', coords: [12.9507, 77.5844], type: 'cool', deltaT: '+6.32 °C', badge: 'Cooling Sanctuary', surface: '240 acres of heritage botanical trees, lake, and glasshouse.', verify: '✓ SATELLITE CONFIRMS: Dense green tree crowns & lake water surface.' }},
       {{ id: 'cubbon', name: 'Cubbon Park Forest Core', coords: [12.9763, 77.5929], type: 'cool', deltaT: '+7.26 °C', badge: 'Cooling Sanctuary', surface: '300 acres of tall continuous urban forest canopy buffering Vidhana Soudha.', verify: '✓ SATELLITE CONFIRMS: Dense tree canopy covering walkways and central lawn.' }},
       {{ id: 'iisc', name: 'IISc Academic Forest Campus', coords: [13.0184, 77.5684], type: 'cool', deltaT: '+7.58 °C', badge: 'Cooling Sanctuary', surface: '400 acres of continuous canopy with indigenous species & mini-rainforest.', verify: '✓ SATELLITE CONFIRMS: Dense forest cover shielding campus academic buildings.' }},
@@ -574,28 +597,33 @@ def generate_clean_heat_cooling_system():
       {{ id: 'hebbal', name: 'Hebbal Lake & Bird Sanctuary', coords: [13.0420, 77.5910], type: 'cool', deltaT: '+6.60 °C', badge: 'Cooling Sanctuary', surface: '150-acre wetland buffer mitigating the northern highway heat corridor.', verify: '✓ SATELLITE CONFIRMS: Expansive water sheet and dense marshland reed zones.' }},
       {{ id: 'madivala', name: 'Madivala Lake & Bio-Park', coords: [12.9150, 77.6210], type: 'cool', deltaT: '+6.75 °C', badge: 'Cooling Sanctuary', surface: 'Major southern lake and biodiversity park providing evaporative cooling.', verify: '✓ SATELLITE CONFIRMS: Large open water surface buffering South Bengaluru.' }},
       {{ id: 'agara', name: 'Agara Lake Wetland Perimeter', coords: [12.9230, 77.6520], type: 'cool', deltaT: '+6.50 °C', badge: 'Cooling Sanctuary', surface: 'Restored lake ecosystem with wide tree perimeter buffering HSR Layout.', verify: '✓ SATELLITE CONFIRMS: Circular water body and perimeter shaded tree trails.' }},
-      {{ id: 'jayanagar', name: 'Jayanagar 4th Block Tree Avenue', coords: [12.9298, 77.5833], type: 'cool', deltaT: '+5.15 °C', badge: 'Moderate Cooling', surface: 'Residential boulevard with continuous avenue tree canopies.', verify: '✓ SATELLITE CONFIRMS: Dense avenue rain trees completely covering streets.' }},
-      {{ id: 'malleshwaram', name: 'Malleshwaram 18th Cross Canopy', coords: [13.0030, 77.5700], type: 'cool', deltaT: '+4.95 °C', badge: 'Moderate Cooling', surface: 'Heritage residential cross with mature tree canopies shading buildings.', verify: '✓ SATELLITE CONFIRMS: High tree crown coverage over residential houses.' }},
 
-      // Heating (10)
-      {{ id: 'peenya', name: 'Peenya Industrial Estate', coords: [13.0285, 77.5186], type: 'heat', deltaT: '+2.06 °C (High Deficit)', badge: 'Severe Heat Island', surface: 'SE Asia largest industrial cluster: thousands of metal roofs, warehouses, asphalt.', verify: '✓ SATELLITE CONFIRMS: Dense tin/metal factory sheds, concrete yards, 0% trees.' }},
-      {{ id: 'majestic', name: 'Majestic Bus Terminal & Station', coords: [12.9767, 77.5713], type: 'heat', deltaT: '+2.61 °C (High Deficit)', badge: 'Severe Heat Island', surface: 'Massive asphalt bus bays, train platforms, metal roofs, and bus exhaust.', verify: '✓ SATELLITE CONFIRMS: Wall-to-wall asphalt bus bays & zero tree coverage.' }},
-      {{ id: 'chickpet', name: 'KR Market & Chickpet Commercial', coords: [12.9665, 77.5770], type: 'heat', deltaT: '+2.15 °C (High Deficit)', badge: 'Severe Heat Island', surface: 'Ultra-compact multi-story commercial buildings, narrow concrete alleys.', verify: '✓ SATELLITE CONFIRMS: Continuous concrete rooftops, no open soil or trees.' }},
+      // Moderate / Buffer Zones (5)
+      {{ id: 'jayanagar', name: 'Jayanagar 4th Block Boulevard', coords: [12.9298, 77.5833], type: 'mod', deltaT: '+5.05 °C', badge: 'Moderate / Buffer Zone', surface: 'Broad residential boulevard with continuous rain tree avenue canopies.', verify: '✓ SATELLITE CONFIRMS: Dense avenue rain trees completely shading roads and houses.' }},
+      {{ id: 'malleshwaram', name: 'Malleshwaram 18th Cross Canopy', coords: [13.0030, 77.5700], type: 'mod', deltaT: '+4.95 °C', badge: 'Moderate / Buffer Zone', surface: 'Heritage residential cross with mature tree canopies shading buildings.', verify: '✓ SATELLITE CONFIRMS: High tree crown coverage over residential houses.' }},
+      {{ id: 'indiranagar', name: 'Indiranagar 100ft Residential Grid', coords: [12.9719, 77.6412], type: 'mod', deltaT: '+3.85 °C', badge: 'Moderate / Buffer Zone', surface: 'Balanced residential grid with leafy street canopies buffering commercial strip.', verify: '✓ SATELLITE CONFIRMS: Mixed residential tree cover balancing paved surfaces.' }},
+      {{ id: 'basavanagudi', name: 'Basavanagudi Heritage Canopy', coords: [12.9422, 77.5755], type: 'mod', deltaT: '+4.65 °C', badge: 'Moderate / Buffer Zone', surface: 'Historic planned layout with mature avenue tree canopies and parks.', verify: '✓ SATELLITE CONFIRMS: Substantial urban tree canopy over residential matrix.' }},
+      {{ id: 'koramangala', name: 'Koramangala 4th Block Matrix', coords: [12.9350, 77.6250], type: 'mod', deltaT: '+3.45 °C', badge: 'Moderate / Buffer Zone', surface: 'Mid-tier residential blocks with internal park buffers balancing shops.', verify: '✓ SATELLITE CONFIRMS: Neighborhood parks and road trees buffering built density.' }},
+
+      // Heating Hotspots (8)
+      {{ id: 'peenya', name: 'Peenya Mega Industrial Estate', coords: [13.0285, 77.5186], type: 'heat', deltaT: '+2.06 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'SE Asia largest industrial cluster: thousands of metal roofs, warehouses, asphalt.', verify: '✓ SATELLITE CONFIRMS: Dense tin/metal factory sheds, concrete yards, 0% trees.' }},
+      {{ id: 'majestic', name: 'Majestic Bus Terminal & Station', coords: [12.9767, 77.5713], type: 'heat', deltaT: '+2.61 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Massive asphalt bus bays, train platforms, metal roofs, and bus exhaust.', verify: '✓ SATELLITE CONFIRMS: Wall-to-wall asphalt bus bays & zero tree coverage.' }},
+      {{ id: 'chickpet', name: 'KR Market & Chickpet Commercial', coords: [12.9665, 77.5770], type: 'heat', deltaT: '+2.15 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Ultra-compact multi-story commercial buildings, narrow concrete alleys.', verify: '✓ SATELLITE CONFIRMS: Continuous concrete rooftops, no open soil or trees.' }},
       {{ id: 'whitefield', name: 'Whitefield ITPL Tech Zone', coords: [12.9818, 77.7285], type: 'heat', deltaT: '+2.33 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'Sprawling tech campuses, glass facades, extensive surface parking asphalt.', verify: '✓ SATELLITE CONFIRMS: Vast concrete office blocks, glass roofs, paved lots.' }},
-      {{ id: 'yeshwanthpur', name: 'Yeshwanthpur APMC Freight Yard', coords: [13.0200, 77.5450], type: 'heat', deltaT: '+2.22 °C (High Deficit)', badge: 'Severe Heat Island', surface: 'Wholesale concrete warehouses, truck bays, and railway freight tracks.', verify: '✓ SATELLITE CONFIRMS: Heavy concrete yards, metal sheds, diesel truck parking.' }},
-      {{ id: 'rajajinagar', name: 'Rajajinagar Industrial Town', coords: [12.9900, 77.5480], type: 'heat', deltaT: '+2.28 °C (High Deficit)', badge: 'Severe Heat Island', surface: 'Dense industrial workshops, fabrication sheds, and concrete structures.', verify: '✓ SATELLITE CONFIRMS: Compact industrial sheds and paved roadways.' }},
-      {{ id: 'goraguntepalya', name: 'Goraguntepalya Flyover Junction', coords: [13.0270, 77.5350], type: 'heat', deltaT: '+2.18 °C (High Deficit)', badge: 'Severe Heat Island', surface: 'Multi-tier concrete flyover intersection, National Highway asphalt.', verify: '✓ SATELLITE CONFIRMS: Multi-lane concrete elevated highway and asphalt expanse.' }},
+      {{ id: 'yeshwanthpur', name: 'Yeshwanthpur APMC Freight Yard', coords: [13.0200, 77.5450], type: 'heat', deltaT: '+2.22 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Wholesale concrete warehouses, truck bays, and railway freight tracks.', verify: '✓ SATELLITE CONFIRMS: Heavy concrete yards, metal sheds, diesel truck parking.' }},
+      {{ id: 'rajajinagar', name: 'Rajajinagar Industrial Town', coords: [12.9900, 77.5480], type: 'heat', deltaT: '+2.28 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Dense industrial workshops, fabrication sheds, and concrete structures.', verify: '✓ SATELLITE CONFIRMS: Compact industrial sheds and paved roadways.' }},
+      {{ id: 'goraguntepalya', name: 'Goraguntepalya Flyover Junction', coords: [13.0270, 77.5350], type: 'heat', deltaT: '+2.18 °C (Severe Deficit)', badge: 'Severe Heat Island', surface: 'Multi-tier concrete flyover intersection, National Highway asphalt.', verify: '✓ SATELLITE CONFIRMS: Multi-lane concrete elevated highway and asphalt expanse.' }},
       {{ id: 'orr_bellandur', name: 'Outer Ring Road Tech Highway', coords: [12.9300, 77.6750], type: 'heat', deltaT: '+2.42 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'High-density tech park corridor, concrete glass towers, wide asphalt road.', verify: '✓ SATELLITE CONFIRMS: Vast corporate tech campuses & multi-lane asphalt.' }},
-      {{ id: 'shivajinagar', name: 'Shivajinagar Commercial Fabric', coords: [12.9860, 77.6030], type: 'heat', deltaT: '+2.55 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'Dense multi-story commercial market buildings and paved roadways.', verify: '✓ SATELLITE CONFIRMS: Concrete rooftops with minimal tree canopy coverage.' }},
-      {{ id: 'koramangala', name: 'Koramangala 80ft Commercial Strip', coords: [12.9350, 77.6250], type: 'heat', deltaT: '+2.75 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'High-density commercial retail buildings, cafes, and paved parking.', verify: '✓ SATELLITE CONFIRMS: Concrete commercial blocks with low tree cover.' }}
+      {{ id: 'shivajinagar', name: 'Shivajinagar Commercial Fabric', coords: [12.9860, 77.6030], type: 'heat', deltaT: '+2.55 °C (Deficit)', badge: 'Moderate Heat Island', surface: 'Dense multi-story commercial market buildings and paved roadways.', verify: '✓ SATELLITE CONFIRMS: Concrete rooftops with minimal tree canopy coverage.' }}
     ];
 
     const landmarkLookup = {{}};
 
     landmarks.forEach(item => {{
       const isCool = item.type === 'cool';
-      const color = isCool ? '#16a34a' : '#dc2626';
-      const iconChar = isCool ? '🌲' : '🔥';
+      const isMod = item.type === 'mod';
+      const color = isCool ? '#16a34a' : (isMod ? '#f59e0b' : '#dc2626');
+      const iconChar = isCool ? '🌲' : (isMod ? '🌿' : '🔥');
 
       const customIcon = L.divIcon({{
         className: 'custom-pin',
@@ -609,9 +637,10 @@ def generate_clean_heat_cooling_system():
 
       const marker = L.marker(item.coords, {{ icon: customIcon }}).addTo(markerGroup);
       
+      const badgeClass = isCool ? 'badge-cool' : (isMod ? 'badge-mod' : 'badge-heat');
       const popupHtml = `
         <div class="popup-box">
-          <span class="popup-badge ${{isCool ? 'badge-cool' : 'badge-heat'}}">${{item.badge}}</span>
+          <span class="popup-badge ${{badgeClass}}">${{item.badge}}</span>
           <div class="popup-title">${{item.name}}</div>
           <div class="popup-detail">
             <div><b>Cooling Index:</b> ${{item.deltaT}}</div>
@@ -716,11 +745,11 @@ def generate_clean_heat_cooling_system():
     cb3.set_label("Thermal Balance: Heat (Red) ⟷ Cool (Green) [ΔT in °C]", fontsize=9)
 
     patches = [
-        mpatches.Patch(color='#dc2626', label='Severe Heat Hotspot (Peenya/Majestic) [≤2.3°C]'),
-        mpatches.Patch(color='#ea580c', label='Moderate Heat Island (Built Canyons) [2.3–3.0°C]'),
-        mpatches.Patch(color='#fef08a', label='Urban Neutral Baseline [3.0–4.8°C]'),
-        mpatches.Patch(color='#16a34a', label='Moderate Cooling Buffer (Avenues) [4.8–5.8°C]'),
-        mpatches.Patch(color='#047857', label='Strong Cooling Sanctuary (Lalbagh/Lakes) [>5.8°C]'),
+        mpatches.Patch(color='#dc2626', label='Severe Heat Hotspot (Peenya/Majestic) [≤2.2°C]'),
+        mpatches.Patch(color='#ea580c', label='Moderate Heat Island (Built Canyons) [2.2–2.65°C]'),
+        mpatches.Patch(color='#facc15', label='Moderate / Buffer Zone (Shaded Residences) [2.65–5.14°C]'),
+        mpatches.Patch(color='#16a34a', label='Moderate Cooling Buffer (Parks/Pockets) [5.14–6.0°C]'),
+        mpatches.Patch(color='#047857', label='Strong Cooling Sanctuary (Lalbagh/Lakes) [>6.0°C]'),
         mpatches.Patch(edgecolor='#0369a1', facecolor='none', linestyle='--', linewidth=1.5, label='Strict BBMP Boundary (717.10 km²)')
     ]
     ax3.legend(handles=patches, loc='lower left', frameon=True, facecolor='white', framealpha=0.95, fontsize=7.5)
