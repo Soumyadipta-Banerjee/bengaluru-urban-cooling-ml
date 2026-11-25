@@ -117,6 +117,10 @@ def generate_clean_heat_cooling_system():
         b64_heat = base64.b64encode(f.read()).decode('utf-8')
         
     print("Encoded clean distinct overlays into base64.")
+
+    # Read clean BBMP boundary GeoJSON
+    with open('outputs/maps/bbmp_boundary_clean.geojson', 'r', encoding='utf-8') as f:
+        bbmp_boundary_geojson_str = f.read()
     
     # 3. Assemble Clean Interactive Leaflet Web Application (Esri Satellite ONLY)
     print("Assembling clean interactive HTML verifier (Esri Satellite only)...")
@@ -374,6 +378,10 @@ def generate_clean_heat_cooling_system():
       <span>Show Landmark Markers</span>
       <input type="checkbox" id="markerToggle" checked onchange="toggleMarkers(this.checked)">
     </div>
+    <div class="toggle-row" style="margin-top: 6px; padding-top: 6px;">
+      <span>Strict BBMP City Boundary</span>
+      <input type="checkbox" id="boundaryToggle" checked onchange="toggleBoundary(this.checked)">
+    </div>
   </div>
 
   <!-- Legend -->
@@ -401,6 +409,10 @@ def generate_clean_heat_cooling_system():
     <div class="legend-row">
       <div class="legend-color" style="background: #dc2626;"></div>
       <div><b>Severe Heat Island Hotspot</b> (ΔT ≤ 2.3°C) — Industrial & Asphalt</div>
+    </div>
+    <div class="legend-row" style="margin-top: 6px; padding-top: 5px; border-top: 1px solid #334155;">
+      <div style="width: 15px; height: 0px; border-top: 3px dashed #38bdf8; margin-right: 2px;"></div>
+      <div><b>Strict BBMP Boundary</b> (717.10 km²) — City Limit</div>
     </div>
   </div>
 
@@ -487,6 +499,36 @@ def generate_clean_heat_cooling_system():
     }};
     let activeOverlay = overlays.dual.addTo(map);
 
+    // 2.5 Strict BBMP City Administrative Boundary Vector Layer
+    const bbmpBoundaryGeoJSON = {bbmp_boundary_geojson_str};
+    const bbmpBoundaryLayer = L.geoJSON(bbmpBoundaryGeoJSON, {{
+      style: {{
+        color: '#38bdf8',       // Bright Electric Cyan
+        weight: 3.2,            // Crisp distinct line
+        opacity: 0.95,
+        dashArray: '7, 6',      // Dashed line
+        fillColor: '#38bdf8',
+        fillOpacity: 0.0,       // Transparent interior so satellite imagery is clean
+        interactive: true
+      }},
+      onEachFeature: function(feature, layer) {{
+        layer.bindTooltip(
+          "<div style='font-weight:700; color:#38bdf8;'>🏛️ BBMP Administrative Boundary</div><div style='font-size:10px; color:#cbd5e1;'>Official City Limit (717.10 km²)</div>",
+          {{ sticky: true }}
+        );
+      }}
+    }}).addTo(map);
+
+    function toggleBoundary(show) {{
+      if (show) {{
+        map.addLayer(bbmpBoundaryLayer);
+        bbmpBoundaryLayer.bringToFront();
+        markerGroup.bringToFront();
+      }} else {{
+        map.removeLayer(bbmpBoundaryLayer);
+      }}
+    }}
+
     function setMode(mode) {{
       map.removeLayer(activeOverlay);
       activeOverlay = overlays[mode];
@@ -494,6 +536,9 @@ def generate_clean_heat_cooling_system():
       activeOverlay.setOpacity(opacity);
       map.addLayer(activeOverlay);
       activeOverlay.bringToFront();
+      if (map.hasLayer(bbmpBoundaryLayer)) {{
+        bbmpBoundaryLayer.bringToFront();
+      }}
       markerGroup.bringToFront();
 
       document.getElementById('btnDual').className = 'btn-mode' + (mode === 'dual' ? ' active-dual' : '');
@@ -597,14 +642,18 @@ def generate_clean_heat_cooling_system():
     os.system(f"cp {interactive_html_path} outputs/01_Urban_Cooling/bengaluru_interactive_cooling_heating_verifier.html")
     
     # 4. Generate 3-Panel Comparison Figure (Panel A: Heating, Panel B: Cooling, Panel C: Balance)
-    print("Generating 3-Panel comparison map...")
+    print("Generating 3-Panel comparison map with strict BBMP boundary...")
     fig, axes = plt.subplots(1, 3, figsize=(22, 9), dpi=300)
     extent = [bounds.left, bounds.right, bounds.bottom, bounds.top]
+    
+    # Load clean BBMP boundary for vector overlay
+    bbmp_gdf = gpd.read_file('outputs/maps/bbmp_boundary_clean.geojson')
     
     # Panel 1: Heating ONLY
     ax1 = axes[0]
     data_heat = np.where((data <= 3.0) & mask_valid, data, np.nan)
     im1 = ax1.imshow(data_heat, extent=extent, cmap='YlOrRd_r', vmin=1.8, vmax=3.0, origin='upper', interpolation='bilinear')
+    bbmp_gdf.boundary.plot(ax=ax1, color='#0369a1', linewidth=1.2, linestyle='--', zorder=5)
     ax1.set_title("Panel A: Urban Heat Island Hotspots (Heating Zones)\nIndustrial Sheds, Concrete Canyons & Asphalt Hubs", fontsize=11.5, fontweight='bold', pad=10)
     ax1.set_xlabel("Longitude (°E)", fontsize=10)
     ax1.set_ylabel("Latitude (°N)", fontsize=10)
@@ -631,6 +680,7 @@ def generate_clean_heat_cooling_system():
     ax2 = axes[1]
     data_cool = np.where((data >= 4.8) & mask_valid, data, np.nan)
     im2 = ax2.imshow(data_cool, extent=extent, cmap='YlGn', vmin=4.8, vmax=8.0, origin='upper', interpolation='bilinear')
+    bbmp_gdf.boundary.plot(ax=ax2, color='#0369a1', linewidth=1.2, linestyle='--', zorder=5)
     ax2.set_title("Panel B: Urban Cooling Island Sanctuaries (Cooling Zones)\nBotanical Gardens, Urban Forests & Lake Basins", fontsize=11.5, fontweight='bold', pad=10)
     ax2.set_xlabel("Longitude (°E)", fontsize=10)
     ax2.grid(color='#94a3b8', linestyle='--', linewidth=0.5, alpha=0.35)
@@ -657,6 +707,7 @@ def generate_clean_heat_cooling_system():
     ax3 = axes[2]
     data_synthesis = np.where(mask_valid, data, np.nan)
     im3 = ax3.imshow(data_synthesis, extent=extent, cmap='RdYlGn', vmin=1.8, vmax=7.5, origin='upper', interpolation='bilinear')
+    bbmp_gdf.boundary.plot(ax=ax3, color='#0369a1', linewidth=1.2, linestyle='--', zorder=5)
     ax3.set_title("Panel C: Dual Thermal Equilibrium Synthesis\nSpatial Balance Between Heat Retention & Natural Mitigation", fontsize=11.5, fontweight='bold', pad=10)
     ax3.set_xlabel("Longitude (°E)", fontsize=10)
     ax3.grid(color='#94a3b8', linestyle='--', linewidth=0.5, alpha=0.35)
@@ -669,7 +720,8 @@ def generate_clean_heat_cooling_system():
         mpatches.Patch(color='#ea580c', label='Moderate Heat Island (Built Canyons) [2.3–3.0°C]'),
         mpatches.Patch(color='#fef08a', label='Urban Neutral Baseline [3.0–4.8°C]'),
         mpatches.Patch(color='#16a34a', label='Moderate Cooling Buffer (Avenues) [4.8–5.8°C]'),
-        mpatches.Patch(color='#047857', label='Strong Cooling Sanctuary (Lalbagh/Lakes) [>5.8°C]')
+        mpatches.Patch(color='#047857', label='Strong Cooling Sanctuary (Lalbagh/Lakes) [>5.8°C]'),
+        mpatches.Patch(edgecolor='#0369a1', facecolor='none', linestyle='--', linewidth=1.5, label='Strict BBMP Boundary (717.10 km²)')
     ]
     ax3.legend(handles=patches, loc='lower left', frameon=True, facecolor='white', framealpha=0.95, fontsize=7.5)
 
@@ -694,6 +746,7 @@ def generate_clean_heat_cooling_system():
     plt.figure(figsize=(14, 10), dpi=300)
     ax = plt.gca()
     im = ax.imshow(data_synthesis, extent=extent, cmap='RdYlGn', vmin=1.8, vmax=7.5, origin='upper', interpolation='bilinear')
+    bbmp_gdf.boundary.plot(ax=ax, color='#0369a1', linewidth=1.5, linestyle='--', zorder=5)
     
     all_22_annotated = [
         ("Lalbagh (+6.3°C)", 77.5844, 12.9507, '#047857', (-20, -35)),
