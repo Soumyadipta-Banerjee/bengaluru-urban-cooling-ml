@@ -160,11 +160,11 @@ def generate_spatial_geotiff(model, scaler, bbmp_geojson_path, output_tif_path="
     print(f"Successfully generated GeoTIFF: {output_tif_path}")
     return cooling_grid, transform, (minx, miny, maxx, maxy)
 
-def create_presentation_map_layout(cooling_grid, bounds, output_img_path="outputs/maps/bengaluru_cooling_map_presentation.png"):
+def create_presentation_map_layout(cooling_grid, bounds, output_img_path="outputs/maps/bengaluru_cooling_map_presentation.png", tertiles=(2.65, 5.14)):
     os.makedirs(os.path.dirname(output_img_path), exist_ok=True)
     
-    # Colormap: 1: Low (amber/yellow), 2: Moderate (light green), 3: High (deep emerald green)
-    cmap = ListedColormap(['#fc8d59', '#ffffbf', '#91cf60'])
+    # Colormap: 1: Heating / UHI (Red), 2: Moderate / Buffer (Vivid Yellow), 3: Cooling / UCI (Emerald Green)
+    cmap = ListedColormap(['#dc2626', '#facc15', '#16a34a'])
     
     # Create masked array for NoData (255)
     masked_data = np.ma.masked_where(cooling_grid == 255, cooling_grid - 1)
@@ -176,19 +176,21 @@ def create_presentation_map_layout(cooling_grid, bounds, output_img_path="output
     
     im = ax.imshow(masked_data, cmap=cmap, extent=extent, origin='upper')
     
-    ax.set_title("Bengaluru Urban Cooling Potential Map (30 m Grid)\nPredicted using SVR & Neural-Network-KKT Fuzzy Regression with AlphaEarth Embeddings", 
+    ax.set_title("Bengaluru Urban Heat vs. Cooling Zones Map (30 m Grid)\nPredicted using SVR & Neural-Network-KKT Fuzzy Regression with AlphaEarth Embeddings", 
                  fontsize=13, fontweight='bold', pad=15)
     ax.set_xlabel("UTM Zone 43N Easting (km)", fontsize=11, labelpad=8)
     ax.set_ylabel("UTM Zone 43N Northing (km)", fontsize=11, labelpad=8)
     
+    t_low, t_high = float(tertiles[0]), float(tertiles[1])
     # Map Legend
     patches = [
-        mpatches.Patch(color='#fc8d59', label='Class 1: Low Cooling Potential (ΔT ≤ Tertile 1)'),
-        mpatches.Patch(color='#ffffbf', label='Class 2: Moderate Cooling Potential (Tertile 1 < ΔT ≤ Tertile 2)'),
-        mpatches.Patch(color='#91cf60', label='Class 3: High Cooling Potential (ΔT > Tertile 2)'),
-        mpatches.Patch(facecolor='white', edgecolor='gray', label='NoData (Outside BBMP / Water)')
+        mpatches.Patch(color='#dc2626', label=f'Class 1: Urban Heat Island / Heating Zone (ΔT ≤ {t_low:.2f}°C)'),
+        mpatches.Patch(color='#facc15', label=f'Class 2: Moderate / Neutral Buffer Zone ({t_low:.2f}°C < ΔT ≤ {t_high:.2f}°C)'),
+        mpatches.Patch(color='#16a34a', label=f'Class 3: Urban Cooling Sanctuary / UCI (ΔT > {t_high:.2f}°C)'),
+        mpatches.Patch(facecolor='white', edgecolor='gray', label='NoData (Outside BBMP)')
     ]
-    ax.legend(handles=patches, loc='lower left', frameon=True, facecolor='white', framealpha=0.92, fontsize=10)
+    ax.legend(handles=patches, loc='lower left', frameon=True, facecolor='white', framealpha=0.95, fontsize=9.5,
+              title="Thermal Zones (Heat vs. Cooling)", title_fontproperties={'weight': 'bold', 'size': 10})
     
     # North Arrow
     ax.annotate('N', xy=(0.95, 0.95), xytext=(0.95, 0.88),
@@ -225,5 +227,5 @@ if __name__ == "__main__":
         resolution=30,
         pca=pca
     )
-    create_presentation_map_layout(cooling_grid, bounds)
+    create_presentation_map_layout(cooling_grid, bounds, tertiles=bundle.get('tertiles', (2.65, 5.14)))
 

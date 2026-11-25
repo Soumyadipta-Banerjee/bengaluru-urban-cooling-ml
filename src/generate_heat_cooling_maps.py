@@ -775,12 +775,12 @@ def generate_clean_heat_cooling_system():
         mpatches.Patch(color='#facc15', label='Moderate / Buffer Zone (Shaded Residences) [2.65–5.14°C]'),
         mpatches.Patch(color='#16a34a', label='Moderate Cooling Buffer (Parks/Pockets) [5.14–6.0°C]'),
         mpatches.Patch(color='#047857', label='Strong Cooling Sanctuary (Lalbagh/Lakes) [>6.0°C]'),
-        mpatches.Patch(edgecolor='#0369a1', facecolor='none', linestyle='--', linewidth=1.5, label='Strict BBMP Boundary (717.10 km²)')
+        mpatches.Patch(edgecolor='#0369a1', facecolor='none', linestyle='--', linewidth=1.5, label=f'Strict BBMP Boundary ({total_area_km2:.2f} km²)')
     ]
     ax3.legend(handles=patches, loc='lower left', frameon=True, facecolor='white', framealpha=0.95, fontsize=7.5)
 
     plt.suptitle("Bengaluru Urban Heat Island (UHI) vs. Urban Cooling Island (UCI) Spatial Analysis\n"
-                 "Multi-Sensor 30 m Resolution Assessment Validated Across 22 Ground-Truth Benchmarks",
+                 "Multi-Sensor 30 m Resolution Assessment Validated Across 25 Ground-Truth Benchmarks",
                  fontsize=14, fontweight='bold', y=0.98)
                  
     plt.tight_layout(rect=[0, 0, 1, 0.95])
@@ -803,23 +803,25 @@ def generate_clean_heat_cooling_system():
     bbmp_gdf.boundary.plot(ax=ax, color='#0369a1', linewidth=1.5, linestyle='--', zorder=5)
     
     all_22_annotated = [
-        ("Lalbagh (+6.3°C)", 77.5844, 12.9507, '#047857', (-20, -35)),
-        ("Cubbon Park (+7.3°C)", 77.5929, 12.9763, '#047857', (20, 20)),
-        ("IISc Campus (+7.6°C)", 77.5684, 13.0184, '#047857', (-40, 25)),
-        ("Sankey Tank (+6.9°C)", 77.5750, 13.0100, '#047857', (15, 15)),
+        ("Lalbagh (+6.5°C)", 77.5844, 12.9507, '#047857', (-20, -35)),
+        ("Cubbon Park (+6.6°C)", 77.5929, 12.9763, '#047857', (20, 20)),
+        ("IISc Campus (+7.6°C)", 77.5684, 13.0184, '#047857', (15, 32)),
+        ("Sankey Tank (+6.9°C)", 77.5750, 13.0100, '#047857', (18, 10)),
         ("GKVK Campus (+5.8°C)", 77.5796, 13.0768, '#047857', (15, 15)),
-        ("Turahalli Forest (+7.0°C)", 77.5180, 12.8850, '#047857', (-25, -25)),
-        ("Ulsoor Lake (+6.4°C)", 77.6200, 12.9820, '#047857', (15, -15)),
+        ("Turahalli Forest (+7.0°C)", 77.5180, 12.8850, '#047857', (20, 22)),
+        ("Ulsoor Lake (+6.7°C)", 77.6200, 12.9820, '#047857', (15, -15)),
         ("Hebbal Lake (+6.6°C)", 77.5910, 13.0420, '#047857', (15, 15)),
         ("Madivala Lake (+6.8°C)", 77.6210, 12.9150, '#047857', (15, -20)),
         ("Agara Lake (+6.5°C)", 77.6520, 12.9230, '#047857', (15, 15)),
-        ("Peenya Industrial (2.1°C)", 77.5186, 13.0285, '#dc2626', (-75, 25)),
-        ("Majestic Bus Hub (2.6°C)", 77.5713, 12.9767, '#dc2626', (-90, -30)),
-        ("KR Market / Chickpet (2.2°C)", 77.5770, 12.9665, '#dc2626', (15, -25)),
-        ("Whitefield ITPL (2.3°C)", 77.7285, 12.9818, '#dc2626', (25, 20)),
-        ("Yeshwanthpur Freight (2.2°C)", 77.5450, 13.0200, '#dc2626', (-65, -25)),
-        ("Goraguntepalya (2.2°C)", 77.5350, 13.0270, '#dc2626', (15, 20)),
-        ("Outer Ring Road (2.4°C)", 77.6750, 12.9300, '#dc2626', (15, -15))
+        ("Peenya Industrial (1.8°C)", 77.5186, 13.0285, '#dc2626', (-95, -5)),
+        ("Majestic Bus Hub (2.0°C)", 77.5713, 12.9767, '#dc2626', (-90, -30)),
+        ("KR Market / Chickpet (2.0°C)", 77.5770, 12.9665, '#dc2626', (15, -25)),
+        ("Whitefield ITPL (2.1°C)", 77.7285, 12.9818, '#dc2626', (25, 20)),
+        ("Yeshwanthpur Freight (1.9°C)", 77.5450, 13.0200, '#dc2626', (-75, -28)),
+        ("Goraguntepalya (1.9°C)", 77.5350, 13.0270, '#dc2626', (-45, 42)),
+        ("Koramangala (2.1°C)", 77.6250, 12.9350, '#dc2626', (-85, -18)),
+        ("Outer Ring Road (2.1°C)", 77.6750, 12.9300, '#dc2626', (15, -15)),
+        ("Shivajinagar (1.8°C)", 77.6051, 12.9911, '#dc2626', (15, 22))
     ]
     for label, lon, lat, col, off in all_22_annotated:
         ax.plot(lon, lat, 'o', color=col, markeredgecolor='white', markersize=8, markeredgewidth=1.8, zorder=6)
@@ -830,7 +832,7 @@ def generate_clean_heat_cooling_system():
                     zorder=7)
                     
     ax.set_title("Bengaluru Dual-Spectrum Thermal Equilibrium Map: Heating vs. Cooling Zones\n"
-                 "High-Definition 30 m Spatial Resolution with 22 Ground-Truth Verification Benchmarks",
+                 "High-Definition 30 m Spatial Resolution with 25 Ground-Truth Verification Benchmarks",
                  fontsize=13.5, fontweight='bold', pad=14)
     ax.set_xlabel("Longitude (°E)", fontsize=11, labelpad=8)
     ax.set_ylabel("Latitude (°N)", fontsize=11, labelpad=8)

@@ -281,8 +281,8 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
     classified_display = np.full((height, width), np.nan, dtype=np.float32)
     classified_display[valid_indices] = classified_grid[valid_indices]
 
-    # Discrete colormap for the 3 classes: Coral/Orange (Weak), Cream/Pale Yellow (Moderate), Forest Green (Strong)
-    cmap_discrete = ListedColormap(['#fc8d59', '#fee08b', '#1a9850'])
+    # Discrete colormap for the 3 classes: Crimson Red (Heating/UHI), Vivid Yellow (Moderate), Emerald Green (Cooling/UCI)
+    cmap_discrete = ListedColormap(['#dc2626', '#facc15', '#16a34a'])
     cmap_discrete.set_bad(color='white')
 
     # -------------------------------------------------------------
@@ -309,11 +309,11 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
     ax2.set_ylabel("Grid row", fontsize=10.5)
 
     legend_patches = [
-        mpatches.Patch(facecolor='#fc8d59', edgecolor='black', linewidth=0.5,
+        mpatches.Patch(facecolor='#dc2626', edgecolor='black', linewidth=0.5,
                        label=f"Class 1: Heating Zone / UHI (ΔT ≤ {T_low:.2f}°C)"),
-        mpatches.Patch(facecolor='#fee08b', edgecolor='black', linewidth=0.5,
+        mpatches.Patch(facecolor='#facc15', edgecolor='black', linewidth=0.5,
                        label=f"Class 2: Neutral / Moderate ({T_low:.2f}°C < ΔT ≤ {T_high:.2f}°C)"),
-        mpatches.Patch(facecolor='#1a9850', edgecolor='black', linewidth=0.5,
+        mpatches.Patch(facecolor='#16a34a', edgecolor='black', linewidth=0.5,
                        label=f"Class 3: Cooling Zone / UCI (ΔT > {T_high:.2f}°C)")
     ]
     ax2.legend(handles=legend_patches, loc='lower right', frameon=True,
