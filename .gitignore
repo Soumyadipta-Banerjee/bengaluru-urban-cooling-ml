@@ -55,3 +55,4 @@ outputs/01_Urban_Cooling/
 outputs/*.zip
 outputs/maps/*wgs84.tif
 outputs/maps/*overlay.png
+outputs/maps/overlay_*.png
