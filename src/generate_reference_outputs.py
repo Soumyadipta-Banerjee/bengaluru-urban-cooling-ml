@@ -108,7 +108,11 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
     probs = np.vstack([p_c1, p_c2, p_c3]).T
     probs = probs / probs.sum(axis=1, keepdims=True)
 
-    class_labels = ["Weak Cooling", "Moderate Cooling", "Strong Cooling"]
+    class_labels = [
+        "Heating Zone / UHI (Class 1)",
+        "Neutral / Moderate (Class 2)",
+        "Cooling Sanctuary / UCI (Class 3)"
+    ]
     colors = ['#fc8d59', '#fee08b', '#1a9850']
     all_fpr, all_tpr = [], []
 
@@ -132,13 +136,13 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
             label=f"Macro-Average ROC (AUC = {macro_auc:.3f})")
     ax.plot([0, 1], [0, 1], 'k--', lw=1.5, label="Chance (AUC = 0.500)")
 
-    ax.set_title("Urban Cooling\nClassification ROC (Held-Out Test Set)", fontsize=13, fontweight='bold', pad=12)
+    ax.set_title("Bengaluru Thermal Analysis\nClassification ROC (Held-Out Test Set)", fontsize=13, fontweight='bold', pad=12)
     ax.set_xlabel("False positive rate", fontsize=11, labelpad=8)
     ax.set_ylabel("True positive rate", fontsize=11, labelpad=8)
     ax.set_xlim([-0.02, 1.02])
     ax.set_ylim([-0.02, 1.02])
     ax.grid(True, linestyle='--', alpha=0.35)
-    ax.legend(loc='lower right', frameon=True, facecolor='white', framealpha=0.9, fontsize=9.5)
+    ax.legend(loc='lower right', frameon=True, facecolor='white', framealpha=0.9, fontsize=9.0)
     plt.tight_layout()
     roc_path = os.path.join(output_dir, "ROC_300dpi.png")
     fig.savefig(roc_path)
@@ -149,20 +153,33 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
     # 3. Confusion_Matrix_300dpi.png
     # -------------------------------------------------------------
     cm = confusion_matrix(y_test_class, y_pred_class)
+    cm_norm = cm.astype('float') / (cm.sum(axis=1)[:, np.newaxis] + 1e-9) * 100
+    annot = np.empty_like(cm).astype(str)
+    for i in range(cm.shape[0]):
+        for j in range(cm.shape[1]):
+            annot[i, j] = f"{cm[i, j]}\n({cm_norm[i, j]:.1f}%)"
+            
+    cm_labels = [
+        "Heating Zone\n(UHI Hotspot)",
+        "Neutral Zone\n(Moderate)",
+        "Cooling Zone\n(UCI Sanctuary)"
+    ]
     
-    fig, ax = plt.subplots(figsize=(6.2, 5.8), dpi=300)
-    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False,
-                xticklabels=["Weak cooling", "Moderate cooling", "Strong cooling"],
-                yticklabels=["Weak cooling", "Moderate cooling", "Strong cooling"],
-                annot_kws={'size': 14, 'weight': 'bold'}, ax=ax)
+    fig, ax = plt.subplots(figsize=(6.8, 6.2), dpi=300)
+    sns.heatmap(cm, annot=annot, fmt='', cmap='Blues', cbar=False,
+                xticklabels=cm_labels,
+                yticklabels=cm_labels,
+                annot_kws={'size': 12, 'weight': 'bold'}, ax=ax)
     
-    ax.set_title("Urban Cooling\nConfusion matrix", fontsize=13, fontweight='bold', pad=14)
-    ax.set_xlabel("Predicted class", fontsize=11, labelpad=10)
-    ax.set_ylabel("Reference class", fontsize=11, labelpad=10)
+    ax.set_title("Bengaluru Thermal Analysis\nHeating vs. Cooling Confusion Matrix", fontsize=13, fontweight='bold', pad=14)
+    ax.set_xlabel("Predicted Thermal Class", fontsize=11, labelpad=10)
+    ax.set_ylabel("Reference Ground-Truth Class", fontsize=11, labelpad=10)
     plt.xticks(rotation=15, ha='right')
     plt.tight_layout()
     cm_path = os.path.join(output_dir, "Confusion_Matrix_300dpi.png")
     fig.savefig(cm_path)
+    plt.close(fig)
+    print(f"Saved: {cm_path}")
     plt.close(fig)
     print(f"Saved: {cm_path}")
 
@@ -276,22 +293,22 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
 
     # Panel 2: Classified 3-Classes
     im2 = ax2.imshow(classified_display, cmap=cmap_discrete, vmin=1, vmax=3, origin='upper')
-    ax2.set_title("B: Categorized Cooling Potential (3 Classes)", fontsize=11.5, fontweight='bold', pad=8)
+    ax2.set_title("B: Categorized Thermal Zones (Heat vs. Cool)", fontsize=11.5, fontweight='bold', pad=8)
     ax2.set_xlabel("Grid column", fontsize=10.5)
     ax2.set_ylabel("Grid row", fontsize=10.5)
 
     legend_patches = [
         mpatches.Patch(facecolor='#fc8d59', edgecolor='black', linewidth=0.5,
-                       label=f"Weak Cooling (ΔT ≤ {T_low:.2f}°C)"),
+                       label=f"Class 1: Heating Zone / UHI (ΔT ≤ {T_low:.2f}°C)"),
         mpatches.Patch(facecolor='#fee08b', edgecolor='black', linewidth=0.5,
-                       label=f"Moderate Cooling ({T_low:.2f}°C < ΔT ≤ {T_high:.2f}°C)"),
+                       label=f"Class 2: Neutral / Moderate ({T_low:.2f}°C < ΔT ≤ {T_high:.2f}°C)"),
         mpatches.Patch(facecolor='#1a9850', edgecolor='black', linewidth=0.5,
-                       label=f"Strong Cooling (ΔT > {T_high:.2f}°C)")
+                       label=f"Class 3: Cooling Zone / UCI (ΔT > {T_high:.2f}°C)")
     ]
     ax2.legend(handles=legend_patches, loc='lower right', frameon=True,
-               facecolor='white', framealpha=0.92, fontsize=8.5, title="Cooling Potential Class")
+               facecolor='white', framealpha=0.92, fontsize=8.2, title="Thermal Potential Class")
 
-    fig.suptitle("Bengaluru Urban Cooling Island (UCI) Potential (30 m Spatial Resolution)", fontsize=13, fontweight='bold', y=0.98)
+    fig.suptitle("Bengaluru Thermal Analysis: Urban Heat Island vs. Urban Cooling Island (30 m Resolution)", fontsize=13, fontweight='bold', y=0.98)
     plt.tight_layout()
     spatial_maps_path = os.path.join(output_dir, "01_spatial_maps_300dpi.png")
     fig.savefig(spatial_maps_path)
@@ -304,13 +321,13 @@ def generate_reference_package(output_dir="outputs/01_Urban_Cooling"):
     # -------------------------------------------------------------
     fig, ax = plt.subplots(figsize=(7.5, 6.8), dpi=300)
     im = ax.imshow(classified_display, cmap=cmap_discrete, vmin=1, vmax=3, origin='upper')
-    ax.set_title("Urban Cooling — Classified GeoTIFF Output", fontsize=13, fontweight='bold', pad=12)
+    ax.set_title("Bengaluru Thermal Analysis — Classified GeoTIFF Output", fontsize=13, fontweight='bold', pad=12)
     ax.set_xlabel("Easting / Grid column\nREAL BENGALURU OBSERVATION | EPSG:32643 | 30 m pixels | Valid BBMP Boundary", fontsize=10, labelpad=8)
     ax.set_ylabel("Northing / Grid row", fontsize=10.5)
 
     ax.legend(handles=legend_patches, loc='lower right', frameon=True,
-              facecolor='white', framealpha=0.95, fontsize=9.2,
-              title="Classified Cooling Potential (Assignment 4)", title_fontproperties={'weight':'bold', 'size':10})
+              facecolor='white', framealpha=0.95, fontsize=8.8,
+              title="Classified Thermal Zones (UHI vs. UCI)", title_fontproperties={'weight':'bold', 'size':9.5})
 
     plt.tight_layout()
     geotiff_img_path = os.path.join(output_dir, "GeoTIFF_Reference_Image_300dpi.png")
@@ -366,10 +383,10 @@ PROJECT SPECIFICATION & SUMMARY:
 - Data Partitioning: Spatially Stratified Blocking (70% Train, 15% Val, 15% Test)
 - Feature Engineering: PCA applied to 64 AlphaEarth embeddings -> 10 Principal Components (99.07% variance) + 5 Physical Features (15 Total)
 - Champion Algorithm: Neural-Network-KKT Fuzzy Regression
-- Cooling Potential Classes (Assignment 4 Requirements):
-  * Class 1: Weak / Low Cooling Potential (ΔT <= {T_low:.2f}°C)
-  * Class 2: Moderate Cooling Potential ({T_low:.2f}°C < ΔT <= {T_high:.2f}°C)
-  * Class 3: Strong / High Cooling Potential (ΔT > {T_high:.2f}°C)
+- Thermal Potential Classes (Urban Heat Island vs Urban Cooling Island):
+  * Class 1: Urban Heat Island / Heating Hotspot (ΔT <= {T_low:.2f}°C)
+  * Class 2: Urban Neutral / Moderate Zone ({T_low:.2f}°C < ΔT <= {T_high:.2f}°C)
+  * Class 3: Urban Cooling Island / Sanctuary (ΔT > {T_high:.2f}°C)
 - Quantitative Validation:
   * Multi-Class Balanced Accuracy: 93.87%
   * Continuous R² Score: {r2:.4f}
@@ -393,8 +410,8 @@ FILE MANIFEST:
    curves demonstrating strong discriminative separation across Weak, Moderate, and Strong classes (Macro AUC = {macro_auc:.3f}).
 
 4. Confusion_Matrix_300dpi.png:
-   300 DPI confusion matrix evaluating 3 cooling potential classes:
-   Weak cooling (<= {T_low:.2f}°C), Moderate cooling ({T_low:.2f}°C - {T_high:.2f}°C], and Strong cooling (> {T_high:.2f}°C).
+   300 DPI confusion matrix evaluating 3 thermal potential classes:
+   Heating Zone / UHI Hotspot (<= {T_low:.2f}°C), Neutral Zone / Moderate ({T_low:.2f}°C - {T_high:.2f}°C], and Cooling Zone / UCI Sanctuary (> {T_high:.2f}°C).
 
 5. GeoTIFF_Reference_Image_300dpi.png:
    Cartographic preview image of the final 30 m GeoTIFF raster over BBMP showing the 

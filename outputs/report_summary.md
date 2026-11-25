@@ -19,9 +19,9 @@
 | **Macro F1-Score** | **84.25%** | **93.16%** | **93.81%** |
 
 ### Class-Wise Recall
-* **Low Cooling Recall:** k-NN = `89.09%` | SVR = `96.36%` | NN-KKT = `97.58%`
-* **Moderate Cooling Recall:** k-NN = `75.97%` | SVR = `86.36%` | NN-KKT = `87.66%`
-* **High Cooling Recall:** k-NN = `87.68%` | SVR = `97.10%` | NN-KKT = `96.38%`
+* **Heating Zone (UHI) Recall:** k-NN = `89.09%` | SVR = `96.36%` | NN-KKT = `97.58%`
+* **Neutral / Moderate Recall:** k-NN = `75.97%` | SVR = `86.36%` | NN-KKT = `87.66%`
+* **Cooling Zone (UCI) Recall:** k-NN = `87.68%` | SVR = `97.10%` | NN-KKT = `96.38%`
 
 ---
 

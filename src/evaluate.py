@@ -94,10 +94,10 @@ def plot_fuzzy_kkt_intervals(y_true, center_preds, lower_bounds, upper_bounds,
 
 def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", output_path="outputs/plots/confusion_matrix.png"):
     if class_names is None:
-        class_names = ["Low", "Moderate", "High"]
+        class_names = ["Heating Zone (UHI)", "Neutral / Moderate", "Cooling Zone (UCI)"]
         
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plt.figure(figsize=(7, 6), dpi=300)
+    plt.figure(figsize=(7.5, 6.5), dpi=300)
     
     cm_norm = cm.astype('float') / (cm.sum(axis=1)[:, np.newaxis] + 1e-9) * 100
     annot = np.empty_like(cm).astype(str)
@@ -110,8 +110,9 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", output
                 annot_kws={'size': 11, 'weight': 'bold'})
                 
     plt.title(title, fontsize=12, fontweight='bold', pad=12)
-    plt.xlabel("Predicted Cooling Potential Class", fontsize=11, labelpad=8)
-    plt.ylabel("Ground Truth Cooling Potential Class", fontsize=11, labelpad=8)
+    plt.xlabel("Predicted Thermal Class", fontsize=11, labelpad=8)
+    plt.ylabel("Ground Truth Reference Class", fontsize=11, labelpad=8)
+    plt.xticks(rotation=15, ha='right')
     plt.tight_layout()
     plt.savefig(output_path)
     plt.close()
@@ -119,7 +120,7 @@ def plot_confusion_matrix(cm, class_names=None, title="Confusion Matrix", output
 
 def plot_class_distribution(y_train, y_val, y_test, class_names=None, output_path="outputs/plots/class_distribution.png"):
     if class_names is None:
-        class_names = ["Low", "Moderate", "High"]
+        class_names = ["Heating Zone (UHI)", "Neutral / Moderate", "Cooling Zone (UCI)"]
         
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     train_counts = [np.sum(y_train == i) for i in [1, 2, 3]]

@@ -302,9 +302,9 @@ def evaluate_model_pipeline(model, X_test, y_cont_test, y_test_class, model_name
     print(f"   Macro Recall:        {macro_rec*100:.2f}%")
     print(f"   Macro F1-Score:      {macro_f1*100:.2f}%")
     print(f" Class-wise Recall:")
-    print(f"   Low Cooling:         {class_recalls[0]*100:.2f}%")
-    print(f"   Moderate Cooling:    {class_recalls[1]*100:.2f}%")
-    print(f"   High Cooling:        {class_recalls[2]*100:.2f}%")
+    print(f"   Heating Zone (UHI):  {class_recalls[0]*100:.2f}%")
+    print(f"   Neutral / Moderate:  {class_recalls[1]*100:.2f}%")
+    print(f"   Cooling Zone (UCI):  {class_recalls[2]*100:.2f}%")
     print(f" Confusion Matrix:\n{cm}")
 
     return {

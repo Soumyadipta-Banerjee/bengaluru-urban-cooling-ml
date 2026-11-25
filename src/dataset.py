@@ -16,8 +16,8 @@ AUXILIARY_COLS = ["elevation", "dw_trees", "dw_built", "dw_water", "dw_grass"]
 FEATURE_COLS = EMBEDDING_COLS + AUXILIARY_COLS
 TARGET_COL = "cooling_intensity"
 CLASS_COL = "cooling_class"
-CLASS_NAMES = ["Low", "Moderate", "High"]
-CLASS_CODES = {1: "Low", 2: "Moderate", 3: "High"}
+CLASS_NAMES = ["Heating Zone (UHI)", "Neutral / Moderate", "Cooling Zone (UCI)"]
+CLASS_CODES = {1: "Heating Zone (UHI)", 2: "Neutral / Moderate", 3: "Cooling Zone (UCI)"}
 
 def generate_benchmark_dataset(bbmp_geojson_path, output_csv_path, num_samples=3000, random_state=42):
     """

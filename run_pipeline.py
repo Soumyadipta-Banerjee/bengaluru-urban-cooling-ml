@@ -184,9 +184,9 @@ def write_report_summary(eval_knn, best_k, eval_svr, eval_fuzzy, svr_cfg, tertil
 | **Macro F1-Score** | **{eval_knn['macro_f1']*100:.2f}%** | **{eval_svr['macro_f1']*100:.2f}%** | **{eval_fuzzy['macro_f1']*100:.2f}%** |
 
 ### Class-Wise Recall
-* **Low Cooling Recall:** k-NN = `{eval_knn['class_recalls']['Low']*100:.2f}%` | SVR = `{eval_svr['class_recalls'][0]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][0]*100:.2f}%`
-* **Moderate Cooling Recall:** k-NN = `{eval_knn['class_recalls']['Moderate']*100:.2f}%` | SVR = `{eval_svr['class_recalls'][1]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][1]*100:.2f}%`
-* **High Cooling Recall:** k-NN = `{eval_knn['class_recalls']['High']*100:.2f}%` | SVR = `{eval_svr['class_recalls'][2]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][2]*100:.2f}%`
+* **Heating Zone (UHI) Recall:** k-NN = `{list(eval_knn['class_recalls'].values())[0]*100:.2f}%` | SVR = `{eval_svr['class_recalls'][0]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][0]*100:.2f}%`
+* **Neutral / Moderate Recall:** k-NN = `{list(eval_knn['class_recalls'].values())[1]*100:.2f}%` | SVR = `{eval_svr['class_recalls'][1]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][1]*100:.2f}%`
+* **Cooling Zone (UCI) Recall:** k-NN = `{list(eval_knn['class_recalls'].values())[2]*100:.2f}%` | SVR = `{eval_svr['class_recalls'][2]*100:.2f}%` | NN-KKT = `{eval_fuzzy['class_recalls'][2]*100:.2f}%`
 
 ---
 
