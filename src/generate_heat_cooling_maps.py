@@ -227,6 +227,59 @@ def generate_clean_heat_cooling_system():
       flex-shrink: 0; border: 1px solid rgba(0,0,0,0.4);
     }}
 
+    /* Bottom Right Spatial Coverage Stats Panel */
+    .stats-panel {{
+      position: absolute; bottom: 24px; right: 16px; z-index: 1000;
+      background: rgba(15, 23, 42, 0.94); backdrop-filter: blur(14px);
+      padding: 14px 18px; border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      width: 350px;
+    }}
+    .stats-header {{
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 9px; padding-bottom: 6px; border-bottom: 1px solid #334155;
+    }}
+    .stats-title {{
+      font-size: 11px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.6px; color: #38bdf8;
+    }}
+    .stats-total {{
+      font-size: 10.5px; font-weight: 700; color: #f8fafc;
+      background: #1e293b; padding: 2px 7px; border-radius: 5px; border: 1px solid #475569;
+    }}
+    .stat-row {{ margin-bottom: 7px; }}
+    .stat-top {{
+      display: flex; align-items: center; gap: 6px; font-size: 10.5px; margin-bottom: 3px;
+    }}
+    .stat-dot {{ width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }}
+    .dot-heat {{ background: #dc2626; box-shadow: 0 0 6px rgba(220, 38, 38, 0.6); }}
+    .dot-neutral {{ background: #fef08a; box-shadow: 0 0 6px rgba(254, 240, 138, 0.5); }}
+    .dot-cool {{ background: #16a34a; box-shadow: 0 0 6px rgba(22, 163, 74, 0.6); }}
+    
+    .stat-label {{ font-weight: 600; color: #cbd5e1; flex: 1; }}
+    .stat-num {{ font-weight: 700; }}
+    .heat-text {{ color: #f87171; }}
+    .neutral-text {{ color: #fef08a; }}
+    .cool-text {{ color: #4ade80; }}
+    .stat-pct {{ font-size: 10px; color: #94a3b8; font-weight: 500; }}
+
+    .progress-bar {{
+      height: 4.5px; background: #1e293b; border-radius: 3px; overflow: hidden; margin-bottom: 2px;
+    }}
+    .bar-fill {{ height: 100%; border-radius: 3px; }}
+    .bar-heat {{ background: linear-gradient(90deg, #ea580c, #dc2626); }}
+    .bar-neutral {{ background: #fef08a; }}
+    .bar-cool {{ background: linear-gradient(90deg, #16a34a, #047857); }}
+
+    .stat-sub {{ font-size: 9px; color: #64748b; margin-left: 14px; }}
+    
+    .stats-footer {{
+      display: flex; justify-content: space-between;
+      margin-top: 8px; padding-top: 6px; border-top: 1px solid #334155;
+      font-size: 9px; color: #64748b;
+    }}
+
     /* Custom Popups */
     .leaflet-popup-content-wrapper {{
       background: #0f172a !important; color: #f8fafc !important;
@@ -348,6 +401,61 @@ def generate_clean_heat_cooling_system():
     <div class="legend-row">
       <div class="legend-color" style="background: #dc2626;"></div>
       <div><b>Severe Heat Island Hotspot</b> (ΔT ≤ 2.3°C) — Industrial & Asphalt</div>
+    </div>
+  </div>
+
+  <!-- Spatial Coverage Statistics Panel (Bottom Right) -->
+  <div class="stats-panel">
+    <div class="stats-header">
+      <div class="stats-title">📊 Spatial Coverage (BBMP)</div>
+      <div class="stats-total">717.10 km² Total</div>
+    </div>
+    
+    <!-- Heating Zone -->
+    <div class="stat-row">
+      <div class="stat-top">
+        <span class="stat-dot dot-heat"></span>
+        <span class="stat-label">Heating Zone (UHI)</span>
+        <span class="stat-num heat-text">159.17 km²</span>
+        <span class="stat-pct">(22.2%)</span>
+      </div>
+      <div class="progress-bar">
+        <div class="bar-fill bar-heat" style="width: 22.20%;"></div>
+      </div>
+      <div class="stat-sub">176,856 px (ΔT ≤ 2.65°C) • Peenya, Majestic, Industrial</div>
+    </div>
+
+    <!-- Moderate Zone -->
+    <div class="stat-row">
+      <div class="stat-top">
+        <span class="stat-dot dot-neutral"></span>
+        <span class="stat-label">Moderate / Neutral</span>
+        <span class="stat-num neutral-text">319.56 km²</span>
+        <span class="stat-pct">(44.6%)</span>
+      </div>
+      <div class="progress-bar">
+        <div class="bar-fill bar-neutral" style="width: 44.56%;"></div>
+      </div>
+      <div class="stat-sub">355,067 px (2.65°C &lt; ΔT ≤ 5.14°C) • Avenues, Residential Matrix</div>
+    </div>
+
+    <!-- Cooling Sanctuary -->
+    <div class="stat-row">
+      <div class="stat-top">
+        <span class="stat-dot dot-cool"></span>
+        <span class="stat-label">Cooling Sanctuary (UCI)</span>
+        <span class="stat-num cool-text">238.37 km²</span>
+        <span class="stat-pct">(33.2%)</span>
+      </div>
+      <div class="progress-bar">
+        <div class="bar-fill bar-cool" style="width: 33.24%;"></div>
+      </div>
+      <div class="stat-sub">264,853 px (ΔT &gt; 5.14°C) • Lalbagh, Cubbon, Forests, Lakes</div>
+    </div>
+
+    <div class="stats-footer">
+      <span>📐 Grid: 796,776 valid pixels (30 m × 30 m)</span>
+      <span>1 px = 900 m² (0.0009 km²)</span>
     </div>
   </div>
 
