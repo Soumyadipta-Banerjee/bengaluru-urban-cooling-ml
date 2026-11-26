@@ -112,13 +112,13 @@ def generate_clean_heat_cooling_system():
     m_cool_mod = (data > 5.14) & (data <= 6.0) & mask_valid
     m_cool_str = (data > 6.0) & mask_valid
     
-    # Overlay 1: Distinct Tri-Spectrum (All 3 Zones: Heating in Red, Moderate in Bold Yellow/Gold, Cooling in Emerald)
+    # Overlay 1: Distinct Tri-Spectrum (All 3 Zones: Heating in Pure Red, Moderate in Vivid Yellow, Cooling in Emerald)
     rgba_dual = np.zeros((data.shape[0], data.shape[1], 4), dtype=np.uint8)
-    rgba_dual[m_heat_sev] = [220, 38, 38, 230]       # Bright Crimson Red (#dc2626)
-    rgba_dual[m_heat_mod] = [234, 88, 12, 220]       # Vivid Amber Orange (#ea580c)
-    rgba_dual[m_neutral_low] = [245, 158, 11, 225]   # Rich Warm Amber Gold (#f59e0b)
-    rgba_dual[m_neutral_high] = [250, 204, 21, 235]  # Luminous Bright Sun Yellow (#facc15)
-    rgba_dual[m_cool_mod] = [22, 163, 74, 220]       # Fresh Leaf Green (#16a34a)
+    rgba_dual[m_heat_sev] = [220, 38, 38, 235]       # Deep Crimson Red (#dc2626)
+    rgba_dual[m_heat_mod] = [239, 68, 68, 220]       # Bright Red (#ef4444)
+    rgba_dual[m_neutral_low] = [250, 204, 21, 225]   # Vivid Sun Yellow (#facc15)
+    rgba_dual[m_neutral_high] = [253, 224, 71, 235]  # Luminous Bright Yellow (#fde047)
+    rgba_dual[m_cool_mod] = [22, 163, 74, 225]       # Fresh Leaf Green (#16a34a)
     rgba_dual[m_cool_str] = [4, 120, 87, 240]        # Deep Emerald Green (#047857)
     
     # Overlay 2: Cooling ONLY
@@ -126,15 +126,15 @@ def generate_clean_heat_cooling_system():
     rgba_cool[m_cool_mod] = [22, 163, 74, 230]
     rgba_cool[m_cool_str] = [4, 120, 87, 250]
 
-    # Overlay 3: Moderate / Neutral Zone ONLY (Luminous Vivid Yellow & Amber Gold)
+    # Overlay 3: Moderate / Neutral Zone ONLY (Luminous Vivid Yellow)
     rgba_mod = np.zeros_like(rgba_dual)
-    rgba_mod[m_neutral_low] = [245, 158, 11, 235]
-    rgba_mod[m_neutral_high] = [250, 204, 21, 245]
+    rgba_mod[m_neutral_low] = [250, 204, 21, 235]
+    rgba_mod[m_neutral_high] = [253, 224, 71, 245]
     
     # Overlay 4: Heating ONLY
     rgba_heat = np.zeros_like(rgba_dual)
     rgba_heat[m_heat_sev] = [220, 38, 38, 240]
-    rgba_heat[m_heat_mod] = [234, 88, 12, 230]
+    rgba_heat[m_heat_mod] = [239, 68, 68, 225]
     
     Image.fromarray(rgba_dual, 'RGBA').save('outputs/maps/overlay_distinct_dual.png')
     Image.fromarray(rgba_cool, 'RGBA').save('outputs/maps/overlay_cooling_only.png')
@@ -430,32 +430,24 @@ def generate_clean_heat_cooling_system():
   <!-- Legend -->
   <div class="legend-panel">
     <div class="legend-title">
-      <span>Thermal Legend</span>
+      <span>Thermal Legend (3 Classes)</span>
       <span style="font-size: 9.5px; color: #94a3b8;">NN-KKT Model</span>
     </div>
     <div class="legend-row">
-      <div class="legend-color" style="background: #047857;"></div>
-      <div><b>Strong Cooling Sanctuary</b> (ΔT > 6.0°C) — Forests & Lakes</div>
-    </div>
-    <div class="legend-row">
       <div class="legend-color" style="background: #16a34a;"></div>
-      <div><b>Moderate Cooling Buffer</b> (5.14°C - 6.0°C) — Parks & Green Pockets</div>
+      <div><b>Cooling Sanctuary (UCI)</b> (ΔT &gt; 5.14°C) — Forests, Parks &amp; Lakes</div>
     </div>
     <div class="legend-row">
       <div class="legend-color" style="background: #facc15;"></div>
-      <div><b>Moderate / Buffer Zone</b> (2.65°C - 5.14°C) — Shaded Residential Matrix</div>
-    </div>
-    <div class="legend-row">
-      <div class="legend-color" style="background: #ea580c;"></div>
-      <div><b>Moderate Heat Island</b> (2.2°C - 2.65°C) — Concrete Built-up</div>
+      <div><b>Moderate / Neutral Zone</b> (2.65°C &lt; ΔT &le; 5.14°C) — Shaded Residential Avenues</div>
     </div>
     <div class="legend-row">
       <div class="legend-color" style="background: #dc2626;"></div>
-      <div><b>Severe Heat Island Hotspot</b> (ΔT ≤ 2.2°C) — Industrial & Asphalt Core</div>
+      <div><b>Heating Zone (UHI Hotspot)</b> (ΔT &le; 2.65°C) — Industrial, Commercial &amp; Asphalt</div>
     </div>
     <div class="legend-row" style="margin-top: 6px; padding-top: 5px; border-top: 1px solid #334155;">
       <div style="width: 15px; height: 0px; border-top: 3px dashed #38bdf8; margin-right: 2px;"></div>
-      <div><b>Strict BBMP Boundary</b> (717.10 km²) — City Limit</div>
+      <div><b>Strict BBMP Boundary</b> ({total_area_km2:.2f} km²) — City Limit</div>
     </div>
   </div>
 
@@ -557,7 +549,7 @@ def generate_clean_heat_cooling_system():
       }},
       onEachFeature: function(feature, layer) {{
         layer.bindTooltip(
-          "<div style='font-weight:700; color:#38bdf8;'>🏛️ BBMP Administrative Boundary</div><div style='font-size:10px; color:#cbd5e1;'>Official City Limit (717.10 km²)</div>",
+          "<div style='font-weight:700; color:#38bdf8;'>🏛️ BBMP Administrative Boundary</div><div style='font-size:10px; color:#cbd5e1;'>Official City Limit ({total_area_km2:.2f} km²)</div>",
           {{ sticky: true }}
         );
       }}
@@ -770,11 +762,9 @@ def generate_clean_heat_cooling_system():
     cb3.set_label("Thermal Balance: Heat (Red) ⟷ Cool (Green) [ΔT in °C]", fontsize=9)
 
     patches = [
-        mpatches.Patch(color='#dc2626', label='Severe Heat Hotspot (Peenya/Majestic) [≤2.2°C]'),
-        mpatches.Patch(color='#ea580c', label='Moderate Heat Island (Built Canyons) [2.2–2.65°C]'),
-        mpatches.Patch(color='#facc15', label='Moderate / Buffer Zone (Shaded Residences) [2.65–5.14°C]'),
-        mpatches.Patch(color='#16a34a', label='Moderate Cooling Buffer (Parks/Pockets) [5.14–6.0°C]'),
-        mpatches.Patch(color='#047857', label='Strong Cooling Sanctuary (Lalbagh/Lakes) [>6.0°C]'),
+        mpatches.Patch(color='#dc2626', label='Heating Zone / UHI Hotspot (Industrial, Commercial, Asphalt) [≤2.65°C]'),
+        mpatches.Patch(color='#facc15', label='Moderate / Neutral Zone (Shaded Residential Avenues) [2.65–5.14°C]'),
+        mpatches.Patch(color='#16a34a', label='Cooling Sanctuary / UCI (Forests, Botanical Gardens, Lakes) [>5.14°C]'),
         mpatches.Patch(edgecolor='#0369a1', facecolor='none', linestyle='--', linewidth=1.5, label=f'Strict BBMP Boundary ({total_area_km2:.2f} km²)')
     ]
     ax3.legend(handles=patches, loc='lower left', frameon=True, facecolor='white', framealpha=0.95, fontsize=7.5)
